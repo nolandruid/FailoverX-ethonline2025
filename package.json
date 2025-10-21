@@ -6,6 +6,16 @@
     "@lit-protocol/lit-node-client": "^7.3.1",
     "ethers": "^5"
   },
+  "devDependencies": {
+    "hardhat": "^2.19.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^4.9.0"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js"
+  },
   "name": "ethonline2025",
   "version": "1.0.0",
   "main": "index.js",
