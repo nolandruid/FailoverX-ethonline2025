@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PKP Creation Test - ETHOnline 2025</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .pkp-details {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .pkp-details h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        .detail-item {
+            margin: 8px 0;
+            word-break: break-all;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 PKP Creation Test</h1>
+        <p><strong>Smart Transaction Scheduler with Failover - ETHOnline 2025</strong></p>
+        
+        <div class="status" id="status">
+            Ready to test PKP creation. Make sure MetaMask is installed and connected.
+        </div>
+
+        <div>
+            <button onclick="testBasicConnection()" id="connectBtn">🔗 Test Basic Connection</button>
+            <button onclick="testMetaMask()" id="metamaskBtn">🦊 Test MetaMask</button>
+            <button onclick="clearLogs()" id="clearBtn">🗑️ Clear Logs</button>
+        </div>
+
+        <div class="log-container" id="logs">
+            <div>📋 Console logs will appear here...</div>
+        </div>
+
+        <div class="pkp-details" id="pkpDetails" style="display: none;">
+            <h3>🎉 Connection Test Results</h3>
+            <div id="connectionResults"></div>
+        </div>
+    </div>
+
+    <!-- Load dependencies via CDN for testing -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
+    <script>
+        // Custom console logging to display in UI
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        function addLog(message, type = 'log') {
+            const logsContainer = document.getElementById('logs');
+            const logElement = document.createElement('div');
+            logElement.style.marginBottom = '5px';
+            logElement.style.color = type === 'error' ? '#ff6b6b' : '#fff';
+            logElement.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            logsContainer.appendChild(logElement);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '), 'log');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog(args.join(' '), 'error');
+        };
+
+        // Test basic browser capabilities
+        async function testBasicConnection() {
+            const status = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            
+            try {
+                connectBtn.disabled = true;
+                status.textContent = 'Testing basic browser capabilities...';
+                status.className = 'status';
+                
+                console.log('🔄 Testing basic browser capabilities...');
+                
+                // Test 1: Check if we're in a browser
+                if (typeof window === 'undefined') {
+                    throw new Error('Not running in a browser environment');
+                }
+                console.log('✅ Browser environment detected');
+                
+                // Test 2: Check if fetch is available
+                if (typeof fetch === 'undefined') {
+                    throw new Error('Fetch API not available');
+                }
+                console.log('✅ Fetch API available');
+                
+                // Test 3: Check if crypto is available
+                if (!window.crypto || !window.crypto.subtle) {
+                    throw new Error('Web Crypto API not available');
+                }
+                console.log('✅ Web Crypto API available');
+                
+                // Test 4: Check if ethers is loaded
+                if (typeof ethers === 'undefined') {
+                    throw new Error('Ethers.js not loaded');
+                }
+                console.log('✅ Ethers.js loaded successfully');
+                
+                // Test 5: Test a simple network request
+                console.log('🔄 Testing network connectivity...');
+                const response = await fetch('https://httpbin.org/json');
+                if (!response.ok) {
+                    throw new Error('Network request failed');
+                }
+                console.log('✅ Network connectivity working');
+                
+                status.textContent = '✅ All basic tests passed! Browser is ready for PKP operations.';
+                status.className = 'status success';
+                
+            } catch (error) {
+                console.error('Basic connection test failed:', error.message);
+                status.textContent = `❌ Basic test failed: ${error.message}`;
+                status.className = 'status error';
+            } finally {
+                connectBtn.disabled = false;
+            }
+        }
+
+        // Test MetaMask connection
+        async function testMetaMask() {
+            const status = document.getElementById('status');
+            const metamaskBtn = document.getElementById('metamaskBtn');
+            const results = document.getElementById('connectionResults');
+            const pkpDetails = document.getElementById('pkpDetails');
+            
+            try {
+                metamaskBtn.disabled = true;
+                status.textContent = 'Testing MetaMask connection...';
+                status.className = 'status';
+                
+                console.log('🔄 Testing MetaMask connection...');
+                
+                // Test 1: Check if MetaMask is installed
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('MetaMask not detected. Please install MetaMask extension.');
+                }
+                console.log('✅ MetaMask detected');
+                
+                // Test 2: Check if MetaMask is accessible
+                if (!window.ethereum.isMetaMask) {
+                    console.log('⚠️ Warning: ethereum provider may not be MetaMask');
+                } else {
+                    console.log('✅ MetaMask provider confirmed');
+                }
+                
+                // Test 3: Request account access
+                console.log('🔄 Requesting account access...');
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
+                
+                if (accounts.length === 0) {
+                    throw new Error('No accounts found. Please connect MetaMask.');
+                }
+                console.log('✅ Account access granted');
+                console.log(`📱 Connected account: ${accounts[0]}`);
+                
+                // Test 4: Create ethers provider
+                console.log('🔄 Creating ethers provider...');
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const address = await signer.getAddress();
+                console.log('✅ Ethers provider created successfully');
+                console.log(`🔑 Signer address: ${address}`);
+                
+                // Test 5: Get network info
+                console.log('🔄 Getting network information...');
+                const network = await provider.getNetwork();
+                console.log(`🌐 Network: ${network.name} (Chain ID: ${network.chainId})`);
+                
+                // Test 6: Get balance
+                console.log('🔄 Getting account balance...');
+                const balance = await provider.getBalance(address);
+                const balanceEth = ethers.utils.formatEther(balance);
+                console.log(`💰 Balance: ${balanceEth} ETH`);
+                
+                // Display results
+                results.innerHTML = `
+                    <div class="detail-item">
+                        <span class="detail-label">Account:</span> ${address}
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Network:</span> ${network.name} (Chain ID: ${network.chainId})
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Balance:</span> ${balanceEth} ETH
+                    </div>
+                `;
+                
+                pkpDetails.style.display = 'block';
+                status.textContent = '✅ MetaMask connection successful! Ready for PKP operations.';
+                status.className = 'status success';
+                
+            } catch (error) {
+                console.error('MetaMask test failed:', error.message);
+                status.textContent = `❌ MetaMask test failed: ${error.message}`;
+                status.className = 'status error';
+                
+                // Provide helpful error messages
+                if (error.code === 4001) {
+                    console.log('💡 User rejected the connection request');
+                } else if (error.code === -32002) {
+                    console.log('💡 Connection request already pending');
+                }
+            } finally {
+                metamaskBtn.disabled = false;
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '<div>📋 Console logs cleared...</div>';
+            document.getElementById('pkpDetails').style.display = 'none';
+        }
+
+        // Initial setup
+        console.log('🎯 PKP Test Interface Loaded (Simple Version)');
+        console.log('📱 This version tests basic connectivity first');
+        console.log('💡 Click "Test Basic Connection" first, then "Test MetaMask"');
+        
+        // Test if the page loaded correctly
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('✅ DOM fully loaded');
+            });
+        } else {
+            console.log('✅ DOM already loaded');
+        }
+    </script>
+</body>
+</html>
