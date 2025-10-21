@@ -1,3 +1,13 @@
 node_modules
 windsurf-notes.md
 image.png
+
+# Environment files with credentials
+.env
+hedera/.env
+hedera/build/
+hedera/deployment-info.json
+
+# Build artifacts
+*.log
+.DS_Store

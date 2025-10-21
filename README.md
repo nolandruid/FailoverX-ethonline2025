@@ -9,11 +9,17 @@ A decentralized system that enables users to schedule blockchain transactions wi
 - **Distributed key security** - keys never exist in full anywhere
 - **Automated transaction signing** capabilities
 
+### 🆕 Hedera Integration (New!)
+- **Hedera testnet support** for low-cost transactions
+- **Smart contract deployment** on Hedera network
+- **Cross-chain compatibility** with existing PKP system
+- **Hedera Token Service (HTS)** integration ready
+
 ## 🛠️ Technical Stack
 
-- **Blockchain Integration:** Lit Protocol PKPs, ethers.js
+- **Blockchain Integration:** Lit Protocol PKPs, Hedera SDK, ethers.js
 - **Frontend:** HTML/JavaScript, MetaMask integration
-- **Network:** Datil testnet (Lit Protocol)
+- **Networks:** Datil testnet (Lit Protocol), Hedera testnet
 - **Development:** Node.js v22.9.0
 
 ## 🚀 Getting Started
@@ -42,10 +48,21 @@ python3 -m http.server 8000
 3. Click "Test MetaMask" to connect your wallet
 4. Create your first PKP for automated transaction signing
 
+### Testing Hedera Integration
+1. Set up your Hedera testnet credentials in `hedera/.env`
+2. Test connection: `yarn hedera:test`
+3. Deploy Hello World contract: `yarn hedera:deploy`
+4. See `hedera/README.md` for detailed setup instructions
+
 ## 📁 Project Structure
 
 ```
 ethonline2025/
+├── hedera/               # Hedera testnet integration
+│   ├── contracts/        # Smart contracts for Hedera
+│   ├── deploy-hello-world.js  # Contract deployment script
+│   ├── test-connection.js     # Connection testing
+│   └── README.md         # Hedera setup guide
 ├── index.js              # Main PKP creation logic
 ├── pkp-test.html         # PKP testing interface
 ├── package.json          # Dependencies and project config

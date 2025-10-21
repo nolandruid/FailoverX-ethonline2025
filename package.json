@@ -1,20 +1,27 @@
 {
   "dependencies": {
+    "@hashgraph/sdk": "^2.40.0",
     "@lit-protocol/constants": "^7.3.1",
     "@lit-protocol/contracts-sdk": "^7.3.1",
     "@lit-protocol/lit-auth-client": "^7.3.1",
     "@lit-protocol/lit-node-client": "^7.3.1",
+    "dotenv": "^16.3.1",
     "ethers": "^5"
   },
   "devDependencies": {
-    "hardhat": "^2.19.0",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "@openzeppelin/contracts": "^4.9.0"
+    "@openzeppelin/contracts": "^4.9.0",
+    "hardhat": "^2.19.0",
+    "solc": "^0.8.30"
   },
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy": "hardhat run scripts/deploy.js"
+    "deploy": "hardhat run scripts/deploy.js",
+    "hedera:compile": "node hedera/compile-contract.js",
+    "hedera:deploy": "node hedera/deploy-hello-world.js",
+    "hedera:test": "node hedera/test-connection.js",
+    "hedera:test-contract": "node hedera/test-contract.js"
   },
   "name": "ethonline2025",
   "version": "1.0.0",
