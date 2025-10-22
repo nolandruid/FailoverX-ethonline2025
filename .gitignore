@@ -4,6 +4,7 @@ image.png
 
 # Environment files with credentials
 .env
+frontend/.env.local
 hedera/.env
 hedera/build/
 hedera/deployment-info.json
@@ -11,3 +12,5 @@ hedera/deployment-info.json
 # Build artifacts
 *.log
 .DS_Store
+artifacts/
+cache/

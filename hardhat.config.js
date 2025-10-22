@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
+      viaIR: true,
     },
   },
   networks: {
@@ -16,7 +18,7 @@ module.exports = {
       chainId: 31337,
     },
     sepolia: {
-      url: process.env.SEPOLIA_URL || "",
+      url: "https://sepolia.gateway.tenderly.co",
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     holesky: {

@@ -162,6 +162,15 @@ contract SmartTransactionScheduler is ReentrancyGuard, Ownable {
             isActive: true
         });
         supportedChains.push(11155420);
+        
+        // Hedera Testnet
+        chainGasEstimates[296] = ChainGasEstimate({
+            chainId: 296,
+            estimatedGas: 21000,
+            gasPrice: 0.00001 ether, // Very low gas price - one of Hedera's benefits
+            isActive: true
+        });
+        supportedChains.push(296);
     }
 
     /**
