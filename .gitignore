@@ -12,3 +12,5 @@ hedera/deployment-info.json
 # Build artifacts
 *.log
 .DS_Store
+artifacts/
+cache/
