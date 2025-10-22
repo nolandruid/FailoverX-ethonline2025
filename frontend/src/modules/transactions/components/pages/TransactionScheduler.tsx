@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
 import { useWalletConnection } from '../../hooks/useWalletConnection';
-import { TransactionFormData } from '../../types';
-import { Button } from '@globals/components/ui/button';
-import { Card } from '@globals/components/ui/card';
-import { Input } from '@globals/components/ui/input';
-import { Label } from '@globals/components/ui/label';
+import { usePKP } from '../../hooks/usePKP';
+import type { TransactionFormData } from '../../types';
+import { smartContractService, type CreateIntentParams } from '../../services/smartContractService';
+import { vincentPKPService, type TransactionAnalysis } from '../../services/vincentPKPService';
+import { Button } from '@/globals/components/ui/button';
+import { Card } from '@/globals/components/ui/card';
+import { Input } from '@/globals/components/ui/input';
+import { Label } from '@/globals/components/ui/label';
+import { Badge } from '@/globals/components/ui/badge';
+import { Alert, AlertDescription } from '@/globals/components/ui/alert';
 
 export const TransactionScheduler = () => {
   const {
@@ -27,6 +33,27 @@ export const TransactionScheduler = () => {
     recipient: '',
   });
 
+  const [failoverChains, setFailoverChains] = useState<number[]>([11155111, 80001, 421614, 11155420, 296]); // Sepolia, Mumbai, Arbitrum Sepolia, Optimism Sepolia, Hedera Testnet
+  const [maxGasPrice, setMaxGasPrice] = useState('50'); // 50 gwei
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [intentId, setIntentId] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<TransactionAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // PKP integration
+  const {
+    pkp,
+    isCreating: isCreatingPKP,
+    error: pkpError,
+    createPKP,
+    clearError: clearPKPError,
+  } = usePKP();
+  
+  // Vincent PKP state
+  const [vincentPkp, setVincentPkp] = useState<any>(null);
+  const [isCreatingVincent, setIsCreatingVincent] = useState(false);
+
   const handleConnect = async () => {
     await connect();
   };
@@ -35,10 +62,62 @@ export const TransactionScheduler = () => {
     disconnect();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Initialize smart contract service
+  useEffect(() => {
+    const initContract = async () => {
+      if (isConnected && address) {
+        try {
+          // Use environment variable for contract address
+          const contractAddress = import.meta.env.VITE_SMART_TRANSACTION_SCHEDULER_ADDRESS;
+          await smartContractService.initialize(contractAddress);
+        } catch (error) {
+          console.error('Failed to initialize contract service:', error);
+        }
+      }
+    };
+
+    initContract();
+  }, [isConnected, address]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement transaction scheduling logic
-    console.log('Transaction form submitted:', formData);
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Prepare intent parameters
+      const intentParams: CreateIntentParams = {
+        actionType: formData.action === 'TRANSFER' ? 0 : 1, // 0=TRANSFER, 1=SWAP
+        token: getTokenAddress(formData.token),
+        amount: formData.amount,
+        recipient: formData.recipient || address || ethers.constants.AddressZero, // Use form recipient or fallback to sender
+        failoverChains,
+        maxGasPrice,
+        value: formData.token === 'ETH' ? formData.amount : '0',
+      };
+
+      // Create transaction intent
+      const newIntentId = await smartContractService.createIntent(intentParams);
+      setIntentId(newIntentId);
+      
+      console.log('✅ Transaction intent created:', newIntentId);
+    } catch (error: any) {
+      console.error('❌ Failed to create transaction intent:', error);
+      setSubmitError(error?.message || 'Failed to create transaction intent');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getTokenAddress = (token: string): string => {
+    // Mock token addresses for demo - replace with actual addresses
+    const tokenAddresses: Record<string, string> = {
+      'ETH': '0x0000000000000000000000000000000000000000',
+      'USDC': '0xA0b86a33E6441b8435b662f98137B2A0F2F8b8A0', // Mock USDC
+      'DAI': '0x6B175474E89094C44Da98b954EedeAC495271d0F',  // Mock DAI
+      'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7', // Mock USDT
+    };
+    return tokenAddresses[token] || tokenAddresses['ETH'];
   };
 
   const handleFormChange = (field: keyof TransactionFormData, value: string) => {
@@ -116,9 +195,90 @@ export const TransactionScheduler = () => {
           </div>
         </Card>
 
+        {/* Vincent AI PKP Section */}
+        <Card className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+          <h2 className="text-xl font-bold mb-4 text-purple-800">🤖 Vincent AI-Powered PKPs</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Create an AI-powered PKP using Vincent that intelligently routes transactions across chains
+          </p>
+          
+          {(pkp || vincentPkp) ? (
+            <div className="space-y-2">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                ✅ PKP Created
+              </Badge>
+              <div className="text-sm space-y-1">
+                <p><strong>Token ID:</strong> {pkp?.pkp?.tokenId || vincentPkp?.tokenId}</p>
+                <p><strong>ETH Address:</strong> {pkp?.pkp?.ethAddress || vincentPkp?.ethAddress}</p>
+                <p><strong>Public Key:</strong> {pkp?.pkp?.publicKey?.slice(0, 20) || vincentPkp?.publicKey?.slice(0, 20)}...</p>
+                {vincentPkp && (
+                  <>
+                    <p><strong>🤖 AI Agent ID:</strong> {vincentPkp.vincentAgentId}</p>
+                    <p><strong>📦 SDK Version:</strong> {vincentPkp.sdkVersion || 'N/A'}</p>
+                    <p><strong>🔗 Real SDK:</strong> {vincentPkp.isRealSDK ? '✅ Yes' : '❌ Mock'}</p>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pkpError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{pkpError}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-2">
+                <Button
+                  onClick={createPKP}
+                  disabled={isCreatingPKP}
+                  className="bg-purple-600 hover:bg-purple-700 mr-2"
+                >
+                  {isCreatingPKP ? 'Creating PKP...' : 'Create Standard PKP'}
+                </Button>
+                <Button
+                  onClick={async () => {
+                    setIsCreatingVincent(true);
+                    try {
+                      const result = await vincentPKPService.createAIPKP();
+                      if (result.success && result.pkpInfo) {
+                        setVincentPkp(result.pkpInfo);
+                      } else {
+                        setSubmitError(result.message);
+                      }
+                    } catch (error: any) {
+                      setSubmitError(error?.message || 'Failed to create Vincent AI PKP');
+                    } finally {
+                      setIsCreatingVincent(false);
+                    }
+                  }}
+                  disabled={isCreatingVincent}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                >
+                  {isCreatingVincent ? 'Creating AI PKP...' : '🤖 Create Vincent AI PKP'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+
         {/* Transaction Form */}
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-6">Schedule Transaction</h2>
+          
+          {submitError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
+          )}
+          
+          {intentId && (
+            <Alert className="mb-4 bg-green-50 border-green-200">
+              <AlertDescription className="text-green-700">
+                ✅ Transaction intent created! ID: {intentId}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Token Selection */}
             <div className="space-y-2">
@@ -126,7 +286,7 @@ export const TransactionScheduler = () => {
               <select
                 id="token"
                 value={formData.token}
-                onChange={(e) => handleFormChange('token', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormChange('token', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="USDC">USDC</option>
@@ -173,27 +333,121 @@ export const TransactionScheduler = () => {
                   type="text"
                   placeholder="0x..."
                   value={formData.recipient}
-                  onChange={(e) => handleFormChange('recipient', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormChange('recipient', e.target.value)}
                   required
                 />
               </div>
             )}
 
+            {/* Failover Chains */}
+            <div className="space-y-2">
+              <Label>Failover Chains</Label>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">Sepolia (11155111)</Badge>
+                <Badge variant="outline">Mumbai (80001)</Badge>
+                <Badge variant="outline">Arbitrum Sepolia (421614)</Badge>
+                <Badge variant="outline">Optimism Sepolia (11155420)</Badge>
+                <Badge variant="outline">Hedera Testnet (296)</Badge>
+              </div>
+              <p className="text-xs text-gray-500">
+                If the transaction fails on the primary chain, it will automatically retry on these chains
+              </p>
+            </div>
+
+            {/* Max Gas Price */}
+            <div className="space-y-2">
+              <Label htmlFor="maxGasPrice">Max Gas Price (Gwei)</Label>
+              <Input
+                id="maxGasPrice"
+                type="number"
+                placeholder="50"
+                value={maxGasPrice}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxGasPrice(e.target.value)}
+                required
+              />
+              <p className="text-xs text-gray-500">
+                Transaction will only execute if gas price is below this threshold
+              </p>
+            </div>
+
+            {/* AI Analysis Section */}
+            <div className="space-y-4">
+              <div className="flex space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    setIsAnalyzing(true);
+                    try {
+                      const analysis = await vincentPKPService.analyzeTransaction({
+                        token: formData.token,
+                        amount: formData.amount,
+                        recipient: formData.recipient || '0x0000000000000000000000000000000000000000',
+                        maxGasPrice,
+                      });
+                      setAiAnalysis(analysis);
+                    } catch (error) {
+                      console.error('AI analysis failed:', error);
+                    } finally {
+                      setIsAnalyzing(false);
+                    }
+                  }}
+                  disabled={isAnalyzing || !formData.amount}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                >
+                  {isAnalyzing ? '🤖 Analyzing...' : '🤖 Get Vincent AI Recommendation'}
+                </Button>
+              </div>
+              
+              {aiAnalysis && (
+                <Alert className="bg-blue-50 border-blue-200">
+                  <AlertDescription className="text-blue-700">
+                    <div className="space-y-2">
+                      <p><strong>🤖 Vincent AI Recommendation:</strong></p>
+                      <p><strong>Chain:</strong> {aiAnalysis.recommendedChain}</p>
+                      <p><strong>Gas Estimate:</strong> {aiAnalysis.gasEstimate} gwei</p>
+                      <p><strong>Success Rate:</strong> {Math.round(aiAnalysis.successProbability * 100)}%</p>
+                      <p><strong>Reasoning:</strong> {aiAnalysis.reasoning}</p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
             {/* Submit Button */}
-            <Button type="submit" className="w-full">
-              Schedule Transaction
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isSubmitting || !smartContractService.isReady()}
+            >
+              {isSubmitting ? 'Creating Intent...' : 'Schedule Transaction'}
             </Button>
           </form>
         </Card>
 
-        {/* Info Card */}
-        <Card className="p-6 bg-blue-50 border-blue-200">
-          <h3 className="font-semibold mb-2">How it works</h3>
-          <ul className="text-sm text-gray-700 space-y-1">
-            <li>• We monitor your transaction in real-time</li>
-            <li>• If it fails or gas is too high, we automatically route to a cheaper chain</li>
-            <li>• You only pay if the transaction succeeds</li>
-          </ul>
+        {/* Enhanced Info Card */}
+        <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <h3 className="font-semibold mb-3 text-blue-800">🚀 Smart Transaction Scheduler</h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h4 className="font-medium mb-2 text-blue-700">✨ Features</h4>
+              <ul className="text-gray-700 space-y-1">
+                <li>• Cross-chain failover automation</li>
+                <li>• Gas price optimization</li>
+                <li>• PKP-powered execution</li>
+                <li>• Real-time monitoring</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2 text-blue-700">🔗 Supported Chains</h4>
+              <ul className="text-gray-700 space-y-1">
+                <li>• Ethereum Sepolia</li>
+                <li>• Polygon Mumbai</li>
+                <li>• Arbitrum Sepolia</li>
+                <li>• Hedera Testnet</li>
+              </ul>
+            </div>
+          </div>
         </Card>
       </div>
     </div>

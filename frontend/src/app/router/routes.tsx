@@ -3,6 +3,8 @@ import App from '../App.tsx'
 import { Dashboard } from '@/modules/dashboard/components/pages'
 import { Login, SignUp } from '@/modules/auth/components/pages'
 import StandaloneTest from '@/modules/transactions/components/pages/StandaloneTest'
+import { TransactionScheduler } from '@/modules/transactions/components/pages/TransactionScheduler'
+import { TestComponent } from '../../TestComponent'
 import { NotFoundPage } from '@/globals/components/pages'
 import { AuthGuard } from './guards/AuthGuard'
 import { ROUTES } from './consts'
@@ -19,8 +21,12 @@ export const routes: Route[] = [
     element: <StandaloneTest />,
   },
   {
+    path: '/scheduler',
+    element: <TransactionScheduler />,
+  },
+  {
     path: ROUTES.TRANSACTIONS.path,
-    element: <StandaloneTest />,
+    element: <TransactionScheduler />,
   },
   {
     path: ROUTES.LOGIN.path,
