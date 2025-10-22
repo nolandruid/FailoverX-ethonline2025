@@ -1,5 +1,3 @@
-import { Chain } from '../types';
-
 // Chain name mapping
 const CHAIN_NAMES: Record<number, string> = {
   1: 'Ethereum Mainnet',
@@ -155,32 +153,6 @@ class WalletService {
     }
   }
 
-  /**
-   * Add chain to MetaMask
-   */
-  async addChain(chain: Chain): Promise<void> {
-    if (!this.isMetaMaskInstalled()) {
-      throw new Error('MetaMask is not installed.');
-    }
-
-    try {
-      await window.ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [
-          {
-            chainId: `0x${chain.id.toString(16)}`,
-            chainName: chain.name,
-            nativeCurrency: chain.nativeCurrency,
-            rpcUrls: [chain.rpcUrl],
-            blockExplorerUrls: [chain.explorerUrl],
-          },
-        ],
-      });
-    } catch (error) {
-      console.error('Error adding chain:', error);
-      throw error;
-    }
-  }
 
   /**
    * Listen for account changes
