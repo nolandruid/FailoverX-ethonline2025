@@ -11,4 +11,12 @@ export const ROUTES = {
         path: '/dashboard',
         name: 'Dashboard'
     },
+    TRANSACTIONS: {
+        path: '/transactions',
+        name: 'Transactions'
+    },
+    METAMASK_TEST: {
+        path: '/test-metamask',
+        name: 'MetaMask Test'
+    },
 }

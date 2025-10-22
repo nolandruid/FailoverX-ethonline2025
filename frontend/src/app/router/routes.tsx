@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import App from '../App.tsx'
 import { Dashboard } from '@/modules/dashboard/components/pages'
 import { Login, SignUp } from '@/modules/auth/components/pages'
+import StandaloneTest from '@/modules/transactions/components/pages/StandaloneTest'
 import { NotFoundPage } from '@/globals/components/pages'
 import { AuthGuard } from './guards/AuthGuard'
 import { ROUTES } from './consts'
@@ -15,31 +16,23 @@ interface Route {
 export const routes: Route[] = [
   {
     path: '/',
-    element: <App />,
+    element: <StandaloneTest />,
   },
   {
-    path: '/',
-    element: <AuthGuard requireAuth={false} />,
-    children: [
-      {
-        path: ROUTES.LOGIN.path,
-        element: <Login />,
-      },
-      {
-        path: ROUTES.SIGNUP.path,
-        element: <SignUp />,
-      },
-    ]
+    path: ROUTES.TRANSACTIONS.path,
+    element: <StandaloneTest />,
   },
   {
-    path: '/',
-    element: <AuthGuard requireAuth={true} />,
-    children: [
-      {
-        path: ROUTES.DASHBOARD.path,
-        element: <Dashboard />,
-      },
-    ]
+    path: ROUTES.LOGIN.path,
+    element: <Login />,
+  },
+  {
+    path: ROUTES.SIGNUP.path,
+    element: <SignUp />,
+  },
+  {
+    path: ROUTES.DASHBOARD.path,
+    element: <Dashboard />,
   },
   {
     path: '*',
