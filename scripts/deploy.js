@@ -6,15 +6,15 @@ async function main() {
   // Get the ContractFactory and Signers here.
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with the account:", deployer.address);
-  console.log("Account balance:", (await deployer.getBalance()).toString());
+  console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)));
 
   // Deploy the contract
   const SmartTransactionScheduler = await ethers.getContractFactory("SmartTransactionScheduler");
   const scheduler = await SmartTransactionScheduler.deploy();
 
-  await scheduler.deployed();
+  await scheduler.waitForDeployment();
 
-  console.log("SmartTransactionScheduler deployed to:", scheduler.address);
+  console.log("SmartTransactionScheduler deployed to:", await scheduler.getAddress());
   
   // Display some initial info
   const totalIntents = await scheduler.getTotalIntents();
@@ -28,10 +28,10 @@ async function main() {
   console.log("\nGas estimates:");
   for (const chainId of supportedChains) {
     const estimate = await scheduler.getChainGasEstimate(chainId);
-    console.log(`- Chain ${chainId}: ${estimate.estimatedGas} gas at ${ethers.utils.formatUnits(estimate.gasPrice, 'gwei')} gwei`);
+    console.log(`- Chain ${chainId}: ${estimate.estimatedGas} gas at ${ethers.formatUnits(estimate.gasPrice, 'gwei')} gwei`);
   }
 
-  return scheduler.address;
+  return await scheduler.getAddress();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
