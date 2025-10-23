@@ -1,6 +1,6 @@
 import type { GasPrice, ChainConfig, NetworkCongestion } from '../types';
 
-// Prize-focused chains: Ethereum (main), Base (L2), Hedera (ultra-cheap failover)
+// Multi-chain ecosystem: Ethereum L1 + Popular L2s + Hedera alternative
 const SUPPORTED_CHAINS: ChainConfig[] = [
   {
     chainId: 11155111,
@@ -8,7 +8,7 @@ const SUPPORTED_CHAINS: ChainConfig[] = [
     rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
     symbol: 'ETH',
     blockTime: 12,
-    congestionThreshold: 20, // 20 Gwei
+    congestionThreshold: 15, // 15 Gwei
   },
   {
     chainId: 84532,
@@ -16,7 +16,23 @@ const SUPPORTED_CHAINS: ChainConfig[] = [
     rpcUrl: 'https://sepolia.base.org',
     symbol: 'ETH',
     blockTime: 2,
-    congestionThreshold: 0.1, // 0.1 Gwei
+    congestionThreshold: 0.8, // Higher to create competition
+  },
+  {
+    chainId: 421614,
+    name: 'Arbitrum Sepolia',
+    rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
+    symbol: 'ETH',
+    blockTime: 1, // Very fast
+    congestionThreshold: 0.3, // Lower gas threshold
+  },
+  {
+    chainId: 11155420,
+    name: 'Optimism Sepolia',
+    rpcUrl: 'https://sepolia.optimism.io',
+    symbol: 'ETH',
+    blockTime: 2,
+    congestionThreshold: 0.6, // Moderate
   },
   {
     chainId: 295,
@@ -24,7 +40,7 @@ const SUPPORTED_CHAINS: ChainConfig[] = [
     rpcUrl: 'https://testnet.hashio.io/api',
     symbol: 'HBAR',
     blockTime: 3,
-    congestionThreshold: 0.001, // Very low for Hedera
+    congestionThreshold: 0.001, // Ultra-low
   },
 ];
 

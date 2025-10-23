@@ -22,6 +22,18 @@ const SUPPORTED_CHAINS = [
     symbol: 'ETH',
   },
   {
+    chainId: 421614,
+    name: 'Arbitrum Sepolia',
+    rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
+    symbol: 'ETH',
+  },
+  {
+    chainId: 11155420,
+    name: 'Optimism Sepolia',
+    rpcUrl: 'https://sepolia.optimism.io',
+    symbol: 'ETH',
+  },
+  {
     chainId: 295,
     name: 'Hedera Testnet',
     rpcUrl: 'https://testnet.hashio.io/api',

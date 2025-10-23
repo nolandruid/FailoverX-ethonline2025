@@ -6,9 +6,15 @@ export type {
   NetworkCongestion 
 } from './types';
 
+export type { 
+  TransactionContext, 
+  SelectionWeights 
+} from './services/chainSelectionService';
+
 // Services
 export { multiChainBalanceService } from './services/multiChainBalanceService';
 export { gasPriceService } from './services/gasPriceService';
+export { chainSelectionService } from './services/chainSelectionService';
 
 // Hooks
 export { 
@@ -16,3 +22,9 @@ export {
   useChainGasPrice, 
   useGasPriceComparison 
 } from './hooks/useGasPrices';
+
+export { 
+  useChainSelection, 
+  useQuickRecommendation, 
+  useChainComparison 
+} from './hooks/useChainSelection';
