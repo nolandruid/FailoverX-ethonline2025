@@ -22,12 +22,6 @@ const SUPPORTED_CHAINS = [
     symbol: 'ETH',
   },
   {
-    chainId: 80001,
-    name: 'Mumbai Testnet',
-    rpcUrl: 'https://rpc-mumbai.maticvigil.com',
-    symbol: 'MATIC',
-  },
-  {
     chainId: 295,
     name: 'Hedera Testnet',
     rpcUrl: 'https://testnet.hashio.io/api',
