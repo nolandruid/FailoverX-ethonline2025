@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@globals/components/ui/table';
+import { TestNavigation } from '@/components/TestNavigation';
 
 const StandaloneTest = () => {
   const [address, setAddress] = useState<string | null>(null);
@@ -138,8 +139,10 @@ const StandaloneTest = () => {
   // Not connected view
   if (!address) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-md p-6">
+      <div>
+        <TestNavigation />
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Card className="w-full max-w-md p-6">
           <h1 className="text-2xl font-bold mb-4">
             Smart Transaction Scheduler
           </h1>
@@ -166,13 +169,16 @@ const StandaloneTest = () => {
             </p>
           </div>
         </Card>
+        </div>
       </div>
     );
   }
 
   // Connected view
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div>
+      <TestNavigation />
+      <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">
           Smart Transaction Scheduler
@@ -300,6 +306,7 @@ const StandaloneTest = () => {
             <li>• You only pay if the transaction succeeds</li>
           </ul>
         </Card>
+      </div>
       </div>
     </div>
   );
