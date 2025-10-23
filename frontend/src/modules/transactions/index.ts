@@ -1,14 +1,37 @@
-// Export types
-export * from './types';
+// Export all transaction-related functionality
 
-// Export stores
-export * from './stores/walletStore';
+// Services
+export { walletService } from './services/walletService';
+export { smartContractService } from './services/smartContractService';
+export { pkpService } from './services/pkpService';
+export { simplePKPService } from './services/simplePKPService';
+export { vincentPKPService } from './services/vincentPKPService';
+export { hederaService } from './services/hederaService';
+export { transactionSimulationService } from './services/simulationService';
 
-// Export services
-export * from './services/walletService';
+// Types
+export type { 
+  WalletState,
+  Token,
+  TransactionAction,
+  TransactionFormData,
+  TransactionStatus,
+  Transaction,
+  Chain
+} from './types';
 
-// Export hooks
-export * from './hooks/useWalletConnection';
+export type {
+  TransactionSimulation,
+  RiskFactor,
+  SimulationRecommendation,
+  SimulationContext
+} from './services/simulationService';
 
-// Export components
-export * from './components/pages';
+// Hooks
+export { usePKP } from './hooks/usePKP';
+export { useWalletConnection } from './hooks/useWalletConnection';
+export { 
+  useTransactionSimulation, 
+  useChainSimulationComparison, 
+  useSimulationTrends 
+} from './hooks/useTransactionSimulation';

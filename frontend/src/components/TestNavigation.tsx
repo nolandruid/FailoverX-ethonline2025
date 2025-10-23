@@ -23,6 +23,12 @@ export function TestNavigation() {
           🧠 Chain Selection AI
         </Link>
         <Link 
+          to="/transaction-simulation-test" 
+          className="px-3 py-2 rounded hover:bg-gray-700 transition-colors"
+        >
+          🎯 Transaction Simulation
+        </Link>
+        <Link 
           to="/scheduler" 
           className="px-3 py-2 rounded hover:bg-gray-700 transition-colors"
         >

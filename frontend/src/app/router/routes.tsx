@@ -7,6 +7,7 @@ import { TransactionScheduler } from '@/modules/transactions/components/pages/Tr
 import { TestComponent } from '../../TestComponent'
 import { GasPriceTest } from '../../components/GasPriceTest'
 import { ChainSelectionTest } from '../../components/ChainSelectionTest'
+import { TransactionSimulationTest } from '../../components/TransactionSimulation'
 import { NotFoundPage } from '@/globals/components/pages'
 import { AuthGuard } from './guards/AuthGuard'
 import { ROUTES } from './consts'
@@ -33,6 +34,10 @@ export const routes: Route[] = [
   {
     path: '/chain-selection-test',
     element: <ChainSelectionTest />,
+  },
+  {
+    path: '/transaction-simulation-test',
+    element: <TransactionSimulationTest />,
   },
   {
     path: ROUTES.TRANSACTIONS.path,
