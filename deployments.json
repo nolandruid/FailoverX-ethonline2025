@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-10-23T20:00:00.000Z",
+  "contract": "SmartTransactionScheduler",
+  "networks": {
+    "sepolia": {
+      "chainId": 11155111,
+      "address": "0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F",
+      "explorer": "https://sepolia.etherscan.io/address/0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F",
+      "deployed": "2025-10-21"
+    },
+    "arbitrumSepolia": {
+      "chainId": 421614,
+      "address": "0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F",
+      "explorer": "https://sepolia.arbiscan.io/address/0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F",
+      "deployed": "2025-10-23"
+    },
+    "optimismSepolia": {
+      "chainId": 11155420,
+      "address": "0x3Da2d0995F2016e02890A5d51B6A5D0Cf6239649",
+      "explorer": "https://sepolia-optimism.etherscan.io/address/0x3Da2d0995F2016e02890A5d51B6A5D0Cf6239649",
+      "deployed": "2025-10-23"
+    },
+    "hederaTestnet": {
+      "chainId": 296,
+      "address": "0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F",
+      "explorer": "https://hashscan.io/testnet/contract/0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F",
+      "deployed": "2025-10-23"
+    },
+    "baseSepolia": {
+      "chainId": 84532,
+      "address": "PENDING_DEPLOYMENT",
+      "explorer": "https://sepolia.basescan.org/address/",
+      "deployed": "pending"
+    }
+  }
+}
