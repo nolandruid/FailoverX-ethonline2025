@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useWalletConnection } from '../../hooks/useWalletConnection';
 import { usePKP } from '../../hooks/usePKP';
+import { useIntentMonitoring } from '../../hooks/useIntentMonitoring';
 import type { TransactionFormData } from '../../types';
 import { smartContractService, type CreateIntentParams } from '../../services/smartContractService';
 import { vincentPKPService, type TransactionAnalysis } from '../../services/vincentPKPService';
@@ -53,6 +54,20 @@ export const TransactionScheduler = () => {
   // Vincent PKP state
   const [vincentPkp, setVincentPkp] = useState<any>(null);
   const [isCreatingVincent, setIsCreatingVincent] = useState(false);
+
+  // Intent monitoring hook
+  const {
+    isMonitoring,
+    monitoredIntents,
+    startMonitoring,
+    stopMonitoring,
+    triggerExecution,
+    config: monitoringConfig,
+    updateConfig: updateMonitoringConfig,
+    isPKPReady,
+    initializePKP,
+    events: monitoringEvents,
+  } = useIntentMonitoring();
 
   const handleConnect = async () => {
     await connect();
@@ -423,6 +438,139 @@ export const TransactionScheduler = () => {
               {isSubmitting ? 'Creating Intent...' : 'Schedule Transaction'}
             </Button>
           </form>
+        </Card>
+
+        {/* PKP Monitoring Panel */}
+        <Card className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+          <h2 className="text-xl font-bold mb-4 text-purple-800">🤖 Vincent PKP Auto-Execution</h2>
+          
+          <div className="space-y-4">
+            {/* PKP Status */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">PKP Status</p>
+                <Badge variant={isPKPReady ? "default" : "outline"} className={isPKPReady ? "bg-green-500" : ""}>
+                  {isPKPReady ? "✅ Ready" : "⏸️ Not Initialized"}
+                </Badge>
+              </div>
+              
+              {vincentPkp && !isPKPReady && (
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await initializePKP({
+                        pkpPublicKey: vincentPkp.publicKey,
+                        pkpEthAddress: vincentPkp.ethAddress,
+                        vincentAgentId: vincentPkp.vincentAgentId,
+                      });
+                    } catch (error) {
+                      console.error('Failed to initialize PKP:', error);
+                    }
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Initialize PKP
+                </Button>
+              )}
+            </div>
+
+            {/* Monitoring Controls */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Monitoring Status</p>
+                <Badge variant={isMonitoring ? "default" : "outline"} className={isMonitoring ? "bg-blue-500" : ""}>
+                  {isMonitoring ? "🔄 Active" : "⏸️ Stopped"}
+                </Badge>
+              </div>
+              
+              <div className="flex gap-2">
+                {!isMonitoring ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (address) {
+                        startMonitoring(address, {
+                          autoExecute: true,
+                          usePKP: isPKPReady,
+                        });
+                      }
+                    }}
+                    disabled={!address}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Start Monitoring
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={stopMonitoring}
+                    variant="outline"
+                  >
+                    Stop Monitoring
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Monitoring Config */}
+            <div className="text-xs text-gray-600 space-y-1">
+              <p>• Auto-Execute: {monitoringConfig.autoExecute ? '✅' : '❌'}</p>
+              <p>• Use PKP: {monitoringConfig.usePKP ? '✅' : '❌'}</p>
+              <p>• Poll Interval: {monitoringConfig.pollInterval / 1000}s</p>
+              <p>• Max Attempts: {monitoringConfig.maxExecutionAttempts}</p>
+            </div>
+
+            {/* Monitored Intents */}
+            {monitoredIntents.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-purple-700">Monitored Intents ({monitoredIntents.length})</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {monitoredIntents.map((intent) => (
+                    <div key={intent.intentId} className="p-3 bg-white rounded-md border border-purple-200 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-mono text-xs">ID: {intent.intentId}</p>
+                          <Badge variant="outline" className="mt-1">
+                            {intent.status}
+                          </Badge>
+                        </div>
+                        <div className="text-right text-xs text-gray-600">
+                          <p>Attempts: {intent.executionAttempts}</p>
+                          {intent.status === 'PENDING' && (
+                            <Button
+                              size="sm"
+                              onClick={() => triggerExecution(intent.intentId)}
+                              className="mt-1 h-6 text-xs"
+                            >
+                              Execute Now
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent Events */}
+            {monitoringEvents.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-purple-700">Recent Events</p>
+                <div className="space-y-1 max-h-32 overflow-y-auto text-xs">
+                  {monitoringEvents.slice(-5).reverse().map((event, idx) => (
+                    <div key={idx} className="p-2 bg-white rounded border border-purple-100">
+                      <span className="font-semibold text-purple-600">{event.type}</span>
+                      <span className="text-gray-500 ml-2">
+                        {new Date(event.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </Card>
 
         {/* Enhanced Info Card */}
