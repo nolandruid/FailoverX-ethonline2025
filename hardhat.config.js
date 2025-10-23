@@ -20,6 +20,17 @@ module.exports = {
     sepolia: {
       url: "https://sepolia.gateway.tenderly.co",
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 11155111,
+    },
+    baseSepolia: {
+      url: process.env.BASE_SEPOLIA_URL || "https://sepolia.base.org",
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 84532,
+    },
+    hederaTestnet: {
+      url: process.env.HEDERA_TESTNET_URL || "https://testnet.hashio.io/api",
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 296,
     },
     holesky: {
       url: process.env.HOLESKY_URL || "",
