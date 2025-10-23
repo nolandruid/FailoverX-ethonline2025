@@ -5,6 +5,8 @@ import { Login, SignUp } from '@/modules/auth/components/pages'
 import StandaloneTest from '@/modules/transactions/components/pages/StandaloneTest'
 import { TransactionScheduler } from '@/modules/transactions/components/pages/TransactionScheduler'
 import { TestComponent } from '../../TestComponent'
+import { GasPriceTest } from '../../components/GasPriceTest'
+import { ChainSelectionTest } from '../../components/ChainSelectionTest'
 import { NotFoundPage } from '@/globals/components/pages'
 import { AuthGuard } from './guards/AuthGuard'
 import { ROUTES } from './consts'
@@ -23,6 +25,14 @@ export const routes: Route[] = [
   {
     path: '/scheduler',
     element: <TransactionScheduler />,
+  },
+  {
+    path: '/gas-test',
+    element: <GasPriceTest />,
+  },
+  {
+    path: '/chain-selection-test',
+    element: <ChainSelectionTest />,
   },
   {
     path: ROUTES.TRANSACTIONS.path,
