@@ -104,6 +104,27 @@ contract SmartTransactionScheduler is ReentrancyGuard, Ownable {
         uint256 estimatedGas,
         uint256 gasPrice
     );
+    
+    event FailoverInitiated(
+        uint256 indexed intentId,
+        uint256 fromChainId,
+        uint256 toChainId,
+        string reason
+    );
+    
+    event FailoverCompleted(
+        uint256 indexed intentId,
+        uint256 chainId,
+        bool success,
+        string details
+    );
+    
+    event CrossChainExecutionRequested(
+        uint256 indexed intentId,
+        uint256 targetChainId,
+        address executor,
+        uint256 timestamp
+    );
 
     // Modifiers
     modifier onlyIntentCreator(uint256 intentId) {
@@ -469,5 +490,224 @@ contract SmartTransactionScheduler is ReentrancyGuard, Ownable {
      */
     function getTotalIntents() external view returns (uint256) {
         return _nextIntentId - 1;
+    }
+
+    // ============================================
+    // FAILOVER ROUTING FUNCTIONS
+    // ============================================
+
+    /**
+     * @dev Initiate failover to alternative chain
+     * @param intentId The intent ID to failover
+     * @param reason Reason for failover (e.g., "High gas price", "Transaction timeout")
+     * @notice This function is called by off-chain keepers/relayers when primary execution fails
+     */
+    function initiateFailover(
+        uint256 intentId,
+        string calldata reason
+    ) external nonReentrant validIntent(intentId) {
+        TransactionIntent storage intent = intents[intentId];
+        require(
+            intent.status == IntentStatus.FAILED || intent.status == IntentStatus.PENDING,
+            "Intent not eligible for failover"
+        );
+        require(intent.failoverChains.length > 0, "No failover chains configured");
+        
+        // Get the next best chain based on current conditions
+        uint256 targetChainId = _selectBestFailoverChain(intentId);
+        require(targetChainId != 0, "No suitable failover chain found");
+        
+        // Update status
+        IntentStatus oldStatus = intent.status;
+        intent.status = IntentStatus.PENDING;
+        intent.lastAttemptAt = block.timestamp;
+        
+        emit FailoverInitiated(intentId, block.chainid, targetChainId, reason);
+        emit IntentStatusUpdated(intentId, oldStatus, IntentStatus.PENDING, reason);
+        
+        // Emit event for off-chain relayer to bridge assets via Avail Nexus
+        emit CrossChainExecutionRequested(intentId, targetChainId, msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev Select the best failover chain based on gas prices and conditions
+     * @param intentId The intent ID
+     * @return chainId The selected chain ID (0 if none suitable)
+     */
+    function _selectBestFailoverChain(uint256 intentId) private view returns (uint256) {
+        TransactionIntent storage intent = intents[intentId];
+        
+        // Iterate through failover chains in priority order
+        for (uint256 i = 0; i < intent.failoverChains.length; i++) {
+            uint256 chainId = intent.failoverChains[i];
+            ChainGasEstimate memory estimate = chainGasEstimates[chainId];
+            
+            // Check if chain is active and gas price is acceptable
+            if (estimate.isActive && estimate.gasPrice <= intent.maxGasPrice) {
+                return chainId;
+            }
+        }
+        
+        // If no chain meets criteria, return Hedera as ultimate fallback (if configured)
+        for (uint256 i = 0; i < intent.failoverChains.length; i++) {
+            if (intent.failoverChains[i] == 296) { // Hedera testnet
+                return 296;
+            }
+        }
+        
+        return 0; // No suitable chain found
+    }
+
+    /**
+     * @dev Record cross-chain execution result
+     * @param intentId The intent ID
+     * @param chainId The chain where execution was attempted
+     * @param success Whether execution succeeded
+     * @param details Additional details about the execution
+     * @notice Called by off-chain relayers after attempting execution on target chain
+     */
+    function recordCrossChainExecution(
+        uint256 intentId,
+        uint256 chainId,
+        bool success,
+        string calldata details
+    ) external nonReentrant validIntent(intentId) {
+        TransactionIntent storage intent = intents[intentId];
+        
+        if (success) {
+            IntentStatus oldStatus = intent.status;
+            intent.status = IntentStatus.COMPLETED;
+            emit IntentStatusUpdated(intentId, oldStatus, IntentStatus.COMPLETED, details);
+            emit FailoverCompleted(intentId, chainId, true, details);
+        } else {
+            IntentStatus oldStatus = intent.status;
+            intent.status = IntentStatus.FAILED;
+            intent.failureReason = details;
+            emit IntentStatusUpdated(intentId, oldStatus, IntentStatus.FAILED, details);
+            emit FailoverCompleted(intentId, chainId, false, details);
+        }
+    }
+
+    /**
+     * @dev Get optimal chain for execution based on current gas prices
+     * @param intentId The intent ID
+     * @return chainId The optimal chain ID
+     * @return estimatedCost Estimated cost in wei
+     */
+    function getOptimalChain(uint256 intentId) 
+        external 
+        view 
+        validIntent(intentId) 
+        returns (uint256 chainId, uint256 estimatedCost) 
+    {
+        TransactionIntent storage intent = intents[intentId];
+        
+        uint256 lowestCost = type(uint256).max;
+        uint256 bestChain = 0;
+        
+        // Check all failover chains
+        for (uint256 i = 0; i < intent.failoverChains.length; i++) {
+            uint256 targetChain = intent.failoverChains[i];
+            ChainGasEstimate memory estimate = chainGasEstimates[targetChain];
+            
+            if (estimate.isActive && estimate.gasPrice <= intent.maxGasPrice) {
+                uint256 cost = estimate.estimatedGas * estimate.gasPrice;
+                if (cost < lowestCost) {
+                    lowestCost = cost;
+                    bestChain = targetChain;
+                }
+            }
+        }
+        
+        return (bestChain, lowestCost);
+    }
+
+    /**
+     * @dev Check if intent is eligible for failover
+     * @param intentId The intent ID
+     * @return eligible Whether failover is possible
+     * @return reason Reason for eligibility status
+     */
+    function isFailoverEligible(uint256 intentId) 
+        external 
+        view 
+        validIntent(intentId) 
+        returns (bool eligible, string memory reason) 
+    {
+        TransactionIntent storage intent = intents[intentId];
+        
+        if (intent.status != IntentStatus.FAILED && intent.status != IntentStatus.PENDING) {
+            return (false, "Intent not in failed or pending state");
+        }
+        
+        if (block.timestamp > intent.deadline) {
+            return (false, "Intent deadline exceeded");
+        }
+        
+        if (intent.failoverChains.length == 0) {
+            return (false, "No failover chains configured");
+        }
+        
+        // Check if any failover chain has acceptable gas price
+        for (uint256 i = 0; i < intent.failoverChains.length; i++) {
+            uint256 chainId = intent.failoverChains[i];
+            ChainGasEstimate memory estimate = chainGasEstimates[chainId];
+            
+            if (estimate.isActive && estimate.gasPrice <= intent.maxGasPrice) {
+                return (true, "Failover chain available");
+            }
+        }
+        
+        // Check for Hedera fallback
+        for (uint256 i = 0; i < intent.failoverChains.length; i++) {
+            if (intent.failoverChains[i] == 296) {
+                return (true, "Hedera fallback available");
+            }
+        }
+        
+        return (false, "No suitable failover chain with acceptable gas price");
+    }
+
+    /**
+     * @dev Get failover chain recommendations for an intent
+     * @param intentId The intent ID
+     * @return chains Array of recommended chain IDs in priority order
+     * @return costs Array of estimated costs for each chain
+     */
+    function getFailoverRecommendations(uint256 intentId)
+        external
+        view
+        validIntent(intentId)
+        returns (uint256[] memory chains, uint256[] memory costs)
+    {
+        TransactionIntent storage intent = intents[intentId];
+        
+        // Count eligible chains
+        uint256 eligibleCount = 0;
+        for (uint256 i = 0; i < intent.failoverChains.length; i++) {
+            uint256 chainId = intent.failoverChains[i];
+            if (chainGasEstimates[chainId].isActive) {
+                eligibleCount++;
+            }
+        }
+        
+        // Allocate arrays
+        chains = new uint256[](eligibleCount);
+        costs = new uint256[](eligibleCount);
+        
+        // Populate with eligible chains and their costs
+        uint256 index = 0;
+        for (uint256 i = 0; i < intent.failoverChains.length; i++) {
+            uint256 chainId = intent.failoverChains[i];
+            ChainGasEstimate memory estimate = chainGasEstimates[chainId];
+            
+            if (estimate.isActive) {
+                chains[index] = chainId;
+                costs[index] = estimate.estimatedGas * estimate.gasPrice;
+                index++;
+            }
+        }
+        
+        return (chains, costs);
     }
 }
