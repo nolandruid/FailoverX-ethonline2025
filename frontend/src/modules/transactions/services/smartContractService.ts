@@ -53,6 +53,10 @@ export class SmartContractService {
   private provider: ethers.providers.Web3Provider | null = null;
   private signer: ethers.Signer | null = null;
   private contractAddress: string | null = null;
+  
+  // TEST MODE: Set to true to simulate failures for testing failover
+  public testMode = false;
+  public simulateFailure = false;
 
   /**
    * Initialize the service with contract address
@@ -190,6 +194,40 @@ export class SmartContractService {
   }
 
   /**
+   * Get a single intent by ID
+   */
+  async getIntent(intentId: string): Promise<any> {
+    if (!this.contract) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      console.log('🔄 Fetching intent:', intentId);
+      const intent = await this.contract.getIntent(intentId);
+      
+      return {
+        id: intentId,
+        creator: intent.creator,
+        token: intent.targetToken,
+        amount: intent.amount.toString(),
+        recipient: intent.recipient,
+        actionType: intent.actionType,
+        callData: intent.callData,
+        executeAfter: intent.executeAfter,
+        deadline: intent.deadline,
+        failoverChains: intent.failoverChains.map((chain: any) => chain.toNumber()),
+        maxGasPrice: intent.maxGasPrice.toString(),
+        slippageTolerance: intent.slippageTolerance,
+        status: intent.status,
+        createdAt: intent.createdAt.toString(),
+      };
+    } catch (error) {
+      console.error('❌ Failed to fetch intent:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Execute a transaction intent (for demo purposes)
    */
   async executeIntent(intentId: string): Promise<string> {
@@ -199,6 +237,12 @@ export class SmartContractService {
 
     try {
       console.log('🔄 Executing intent:', intentId);
+
+      // TEST MODE: Simulate failure to test failover
+      if (this.testMode && this.simulateFailure) {
+        console.log('🧪 TEST MODE: Simulating transaction failure');
+        throw new Error('Simulated transaction failure for failover testing');
+      }
 
       const tx = await this.contract.executeIntent(intentId, {
         gasLimit: 500000,
