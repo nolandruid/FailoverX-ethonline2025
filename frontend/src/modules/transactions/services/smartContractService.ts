@@ -158,20 +158,27 @@ export class SmartContractService {
       const intents: TransactionIntent[] = [];
 
       for (const intentId of intentIds) {
-        const intent = await this.contract.getIntent(intentId);
-        intents.push({
-          id: intentId.toString(),
-          user: intent.user,
-          actionType: intent.actionType,
-          token: intent.token,
-          amount: ethers.utils.formatEther(intent.amount),
-          data: intent.data,
-          failoverChains: intent.failoverChains.map((chain: any) => chain.toNumber()),
-          maxGasPrice: ethers.utils.formatUnits(intent.maxGasPrice, 'gwei'),
-          status: intent.status,
-          createdAt: intent.createdAt.toString(),
-          executedAt: intent.executedAt.toString(),
-        });
+        try {
+          const intent = await this.contract.getIntent(intentId);
+          
+          // Handle the actual contract return structure
+          intents.push({
+            id: intentId.toString(),
+            user: intent.creator || intent.user || ethers.constants.AddressZero,
+            actionType: intent.actionType || 0,
+            token: intent.targetToken || intent.token || ethers.constants.AddressZero,
+            amount: intent.amount ? ethers.utils.formatEther(intent.amount) : '0',
+            data: intent.callData || intent.data || '0x',
+            failoverChains: intent.failoverChains ? intent.failoverChains.map((chain: any) => chain.toNumber()) : [],
+            maxGasPrice: intent.maxGasPrice ? ethers.utils.formatUnits(intent.maxGasPrice, 'gwei') : '0',
+            status: intent.status !== undefined ? intent.status : 0,
+            createdAt: intent.createdAt ? intent.createdAt.toString() : '0',
+            executedAt: '0', // Contract doesn't track executedAt
+          });
+        } catch (intentError) {
+          console.error(`❌ Failed to fetch intent ${intentId}:`, intentError);
+          // Skip this intent and continue
+        }
       }
 
       console.log('✅ Found', intents.length, 'intents');
