@@ -41,7 +41,31 @@ export const useWalletConnection = () => {
       setChainName(walletChainName);
       setIsConnected(true);
 
-      // Get balance after connection
+      // Check if on Sepolia testnet (11155111)
+      const SEPOLIA_CHAIN_ID = 11155111;
+      if (walletChainId !== SEPOLIA_CHAIN_ID) {
+        console.warn(`⚠️ Wrong network detected: ${walletChainName} (${walletChainId})`);
+        console.log('🔄 Attempting to switch to Sepolia testnet...');
+        
+        try {
+          await walletService.switchChain(SEPOLIA_CHAIN_ID);
+          // Wait a bit for the switch to complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Update chain info after switch
+          const newChainId = await walletService.getChainId();
+          const newChainName = walletService.getChainName(newChainId);
+          setChainId(newChainId);
+          setChainName(newChainName);
+          
+          console.log('✅ Switched to Sepolia testnet');
+        } catch (switchErr: any) {
+          console.error('❌ Failed to switch network:', switchErr);
+          setError(new Error('Please manually switch to Sepolia testnet in MetaMask'));
+        }
+      }
+
+      // Get balance after connection (and potential network switch)
       const walletBalance = await walletService.getBalance(walletAddress);
       setBalance(walletBalance);
     } catch (err: any) {

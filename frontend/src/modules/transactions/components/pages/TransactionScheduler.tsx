@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/globals/components/ui/alert';
 export const TransactionScheduler = () => {
   const {
     address,
+    chainId,
     chainName,
     balance,
     isConnected,
@@ -23,6 +24,7 @@ export const TransactionScheduler = () => {
     error,
     connect,
     disconnect,
+    switchChain,
     formatAddress,
     isMetaMaskInstalled,
   } = useWalletConnection();
@@ -189,10 +191,38 @@ export const TransactionScheduler = () => {
     );
   }
 
+  // Check if on correct network
+  const SEPOLIA_CHAIN_ID = 11155111;
+  const isWrongNetwork = chainId !== SEPOLIA_CHAIN_ID;
+
   // Connected state
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Wrong Network Warning */}
+        {isWrongNetwork && (
+          <Alert variant="destructive" className="border-red-500 bg-red-50">
+            <AlertDescription className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold">⚠️ Wrong Network Detected</p>
+                <p className="text-sm">You're on {chainName}. Please switch to Sepolia Testnet to use this app.</p>
+              </div>
+              <Button
+                onClick={async () => {
+                  try {
+                    await switchChain(SEPOLIA_CHAIN_ID);
+                  } catch (err) {
+                    console.error('Failed to switch network:', err);
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Switch to Sepolia
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Wallet Info Header */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
@@ -201,7 +231,11 @@ export const TransactionScheduler = () => {
               <p className="font-mono font-semibold">{formatAddress(address!)}</p>
             </div>
             <div className="space-y-1 text-right">
-              <p className="text-sm text-gray-600">{chainName}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-600">{chainName}</p>
+                {isWrongNetwork && <Badge variant="destructive">Wrong Network</Badge>}
+                {!isWrongNetwork && <Badge className="bg-green-500">Sepolia ✓</Badge>}
+              </div>
               <p className="font-semibold">{balance} ETH</p>
             </div>
             <Button onClick={handleDisconnect} variant="outline">
