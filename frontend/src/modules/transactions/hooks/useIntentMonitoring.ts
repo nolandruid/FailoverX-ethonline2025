@@ -92,6 +92,47 @@ export function useIntentMonitoring(): UseIntentMonitoringReturn {
       addEvent('intent:max_attempts', data);
     };
 
+    // Failover events
+    const onFailoverTriggered = (data: any) => {
+      addEvent('intent:failover_triggered', data);
+    };
+
+    const onAnalyzingChains = (data: any) => {
+      addEvent('intent:analyzing_chains', data);
+    };
+
+    const onBackupSelected = (data: any) => {
+      addEvent('intent:backup_selected', data);
+    };
+
+    const onBridging = (data: any) => {
+      addEvent('intent:bridging', data);
+    };
+
+    const onBridgeInitiated = (data: any) => {
+      addEvent('intent:bridge_initiated', data);
+    };
+
+    const onBridgeWaiting = (data: any) => {
+      addEvent('intent:bridge_waiting', data);
+    };
+
+    const onBridgeCompleted = (data: any) => {
+      addEvent('intent:bridge_completed', data);
+    };
+
+    const onRetryingOnBackup = (data: any) => {
+      addEvent('intent:retrying_on_backup', data);
+    };
+
+    const onFailoverSuccess = (data: any) => {
+      addEvent('intent:failover_success', data);
+    };
+
+    const onFailoverFailed = (data: any) => {
+      addEvent('intent:failover_failed', data);
+    };
+
     // Config events
     const onConfigUpdated = (data: any) => {
       setConfig(data.config);
@@ -108,6 +149,16 @@ export function useIntentMonitoring(): UseIntentMonitoringReturn {
     intentMonitoringService.on('intent:failed', onFailed);
     intentMonitoringService.on('intent:error', onIntentError);
     intentMonitoringService.on('intent:max_attempts', onMaxAttempts);
+    intentMonitoringService.on('intent:failover_triggered', onFailoverTriggered);
+    intentMonitoringService.on('intent:analyzing_chains', onAnalyzingChains);
+    intentMonitoringService.on('intent:backup_selected', onBackupSelected);
+    intentMonitoringService.on('intent:bridging', onBridging);
+    intentMonitoringService.on('intent:bridge_initiated', onBridgeInitiated);
+    intentMonitoringService.on('intent:bridge_waiting', onBridgeWaiting);
+    intentMonitoringService.on('intent:bridge_completed', onBridgeCompleted);
+    intentMonitoringService.on('intent:retrying_on_backup', onRetryingOnBackup);
+    intentMonitoringService.on('intent:failover_success', onFailoverSuccess);
+    intentMonitoringService.on('intent:failover_failed', onFailoverFailed);
     intentMonitoringService.on('config:updated', onConfigUpdated);
 
     // Cleanup
@@ -121,6 +172,16 @@ export function useIntentMonitoring(): UseIntentMonitoringReturn {
       intentMonitoringService.off('intent:failed', onFailed);
       intentMonitoringService.off('intent:error', onIntentError);
       intentMonitoringService.off('intent:max_attempts', onMaxAttempts);
+      intentMonitoringService.off('intent:failover_triggered', onFailoverTriggered);
+      intentMonitoringService.off('intent:analyzing_chains', onAnalyzingChains);
+      intentMonitoringService.off('intent:backup_selected', onBackupSelected);
+      intentMonitoringService.off('intent:bridging', onBridging);
+      intentMonitoringService.off('intent:bridge_initiated', onBridgeInitiated);
+      intentMonitoringService.off('intent:bridge_waiting', onBridgeWaiting);
+      intentMonitoringService.off('intent:bridge_completed', onBridgeCompleted);
+      intentMonitoringService.off('intent:retrying_on_backup', onRetryingOnBackup);
+      intentMonitoringService.off('intent:failover_success', onFailoverSuccess);
+      intentMonitoringService.off('intent:failover_failed', onFailoverFailed);
       intentMonitoringService.off('config:updated', onConfigUpdated);
     };
   }, []);
