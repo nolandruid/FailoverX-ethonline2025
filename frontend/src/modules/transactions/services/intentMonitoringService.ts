@@ -199,6 +199,9 @@ export class IntentMonitoringService {
         console.log('📝 Transaction hash:', result.txHash);
         status.status = 'COMPLETED';
         this.emit('intent:executed', { intentId, txHash: result.txHash });
+        
+        // Remove from monitoring after successful execution
+        this.monitoredIntents.delete(intentId);
       } else {
         console.log('❌ Intent execution failed:', intentId);
         status.status = 'FAILED';
@@ -207,7 +210,17 @@ export class IntentMonitoringService {
 
     } catch (error: any) {
       console.error('❌ Error executing intent:', intentId, error);
-      status.status = 'FAILED';
+      
+      // Check if error is because intent was already executed
+      const errorMsg = error?.message || '';
+      if (errorMsg.includes('Intent not pending') || errorMsg.includes('transaction failed')) {
+        console.log('⚠️ Intent may have been executed already, removing from monitoring');
+        status.status = 'COMPLETED';
+        this.monitoredIntents.delete(intentId);
+      } else {
+        status.status = 'FAILED';
+      }
+      
       this.emit('intent:error', { intentId, error: error?.message });
     }
   }

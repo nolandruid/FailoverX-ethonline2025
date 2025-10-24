@@ -82,10 +82,28 @@ export const TransactionScheduler = () => {
   // Initialize smart contract service
   useEffect(() => {
     const initContract = async () => {
-      if (isConnected && address) {
+      if (isConnected && address && chainId) {
         try {
           // Use environment variable for contract address
-          const contractAddress = import.meta.env.VITE_SMART_TRANSACTION_SCHEDULER_ADDRESS;
+          let contractAddress = import.meta.env.VITE_SMART_TRANSACTION_SCHEDULER_ADDRESS;
+          
+          // If no env var, use chain-specific defaults
+          if (!contractAddress) {
+            const chainAddresses: Record<number, string> = {
+              11155111: '0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F', // Sepolia
+              421614: '0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F',   // Arbitrum Sepolia
+              11155420: '0x3Da2d0995F2016e02890A5d51B6A5D0Cf6239649', // Optimism Sepolia
+              296: '0x43D8e9cdDEb55eee3a1B3D5825C2E467C3616E6F',      // Hedera
+            };
+            contractAddress = chainAddresses[chainId];
+          }
+          
+          if (!contractAddress) {
+            console.error('❌ No contract address configured for chain:', chainId);
+            return;
+          }
+          
+          console.log('📋 Initializing contract on chain', chainId, 'at address:', contractAddress);
           await smartContractService.initialize(contractAddress);
         } catch (error) {
           console.error('Failed to initialize contract service:', error);
@@ -94,7 +112,7 @@ export const TransactionScheduler = () => {
     };
 
     initContract();
-  }, [isConnected, address]);
+  }, [isConnected, address, chainId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
