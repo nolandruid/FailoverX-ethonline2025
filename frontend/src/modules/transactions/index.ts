@@ -8,6 +8,8 @@ export { simplePKPService } from './services/simplePKPService';
 export { vincentPKPService } from './services/vincentPKPService';
 export { hederaService } from './services/hederaService';
 export { transactionSimulationService } from './services/simulationService';
+export { intentMonitoringService } from './services/intentMonitoringService';
+export { pkpExecutionService } from './services/pkpExecutionService';
 
 // Types
 export type { 

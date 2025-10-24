@@ -15,6 +15,7 @@ export type {
 export { multiChainBalanceService } from './services/multiChainBalanceService';
 export { gasPriceService } from './services/gasPriceService';
 export { chainSelectionService } from './services/chainSelectionService';
+export { availBridgeService } from './services/availBridgeService';
 
 // Hooks
 export { 
