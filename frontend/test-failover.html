@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Failover System Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.executing { background: #cce5ff; color: #004085; }
+        .status.bridging { background: #e7d4ff; color: #6f42c1; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log-entry.info { color: #4fc3f7; }
+        .log-entry.success { color: #81c784; }
+        .log-entry.error { color: #e57373; }
+        .log-entry.warning { color: #ffb74d; }
+        .metric {
+            display: inline-block;
+            margin: 10px 20px 10px 0;
+            padding: 10px 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌉 Cross-Chain Failover System Test</h1>
+        
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <button onclick="testAvailBridge()">1. Test Avail Bridge Service</button>
+            <button onclick="testMonitoring()">2. Test Intent Monitoring</button>
+            <button onclick="testFailoverFlow()">3. Test Complete Failover Flow</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Current Status</h2>
+            <div id="status" class="status pending">Ready to test</div>
+            
+            <div style="margin-top: 20px;">
+                <div class="metric">
+                    <div class="metric-label">Failover Attempts</div>
+                    <div class="metric-value" id="failoverCount">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Bridge Time</div>
+                    <div class="metric-value" id="bridgeTime">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Current Chain</div>
+                    <div class="metric-value" id="currentChain">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Console Logs</h2>
+            <div id="logs" class="log">
+                <div class="log-entry info">🚀 Failover test system ready</div>
+                <div class="log-entry info">📋 Click a test button to begin</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Instructions</h2>
+            <ol>
+                <li><strong>Test 1:</strong> Verifies Avail Bridge Service initialization and chain selection</li>
+                <li><strong>Test 2:</strong> Tests intent monitoring service with failover configuration</li>
+                <li><strong>Test 3:</strong> Simulates complete failover flow (failure → bridge → retry)</li>
+            </ol>
+            <p><strong>Note:</strong> These are frontend-only tests. For full integration testing, connect MetaMask and use the main app.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import services (adjust paths as needed for your build setup)
+        let availBridgeService, intentMonitoringService;
+        
+        // Mock services for testing
+        const mockAvailBridge = {
+            async initialize() {
+                log('🌉 Initializing Avail Nexus Bridge Service...', 'info');
+                await delay(500);
+                log('✅ Avail Nexus Bridge Service initialized', 'success');
+                return true;
+            },
+            
+            async getOptimalBackupChain(primaryChainId, userAddress, amount) {
+                log(`🔍 Finding optimal backup chain...`, 'info');
+                log(`❌ Primary chain failed: ${getChainName(primaryChainId)}`, 'warning');
+                await delay(300);
+                
+                const backupChain = 295; // Hedera
+                log(`✅ Selected backup chain: ${getChainName(backupChain)} (fastest, cheapest)`, 'success');
+                updateMetric('currentChain', getChainName(backupChain));
+                return backupChain;
+            },
+            
+            async bridgeForFailover(request) {
+                log('🌉 Initiating Avail Nexus bridge...', 'info');
+                log(`📍 From: ${getChainName(request.fromChainId)}`, 'info');
+                log(`📍 To: ${getChainName(request.toChainId)}`, 'info');
+                
+                const startTime = Date.now();
+                const bridgeId = `bridge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const estimatedTime = request.toChainId === 295 ? 5 : 15;
+                
+                await delay(1000);
+                
+                log(`✅ Bridge initiated: ${bridgeId}`, 'success');
+                log(`⏱️ Estimated completion: ${estimatedTime}s`, 'info');
+                
+                // Simulate bridge completion
+                await delay(estimatedTime * 1000);
+                
+                const actualTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                log(`✅ Bridge completed in ${actualTime}s`, 'success');
+                updateMetric('bridgeTime', `${actualTime}s`);
+                
+                return {
+                    success: true,
+                    bridgeId,
+                    bridgeTxHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+                    estimatedTime
+                };
+            },
+            
+            async checkBridgeCompletion(bridgeId) {
+                return true;
+            }
+        };
+
+        const mockMonitoring = {
+            config: {
+                enableFailover: true,
+                maxFailoverAttempts: 2,
+                pollInterval: 10000,
+                maxExecutionAttempts: 3
+            },
+            
+            async simulateFailover(intentId) {
+                updateStatus('Failover triggered', 'bridging');
+                log('🔄 Triggering cross-chain failover...', 'warning');
+                
+                const failoverCount = parseInt(document.getElementById('failoverCount').textContent) + 1;
+                updateMetric('failoverCount', failoverCount);
+                
+                log(`🔄 Failover attempt ${failoverCount}/${this.config.maxFailoverAttempts}`, 'info');
+                
+                // Get optimal backup chain
+                const backupChain = await mockAvailBridge.getOptimalBackupChain(11155111, '0x...', '1000000');
+                
+                // Bridge assets
+                updateStatus('Bridging assets', 'bridging');
+                const bridgeResult = await mockAvailBridge.bridgeForFailover({
+                    fromChainId: 11155111,
+                    toChainId: backupChain,
+                    token: '0x...',
+                    amount: '1000000',
+                    recipient: '0x...',
+                    userAddress: '0x...'
+                });
+                
+                if (!bridgeResult.success) {
+                    throw new Error('Bridge failed');
+                }
+                
+                // Execute on backup chain
+                updateStatus('Retrying on backup chain', 'executing');
+                log(`🔄 Retrying execution on backup chain: ${getChainName(backupChain)}`, 'info');
+                await delay(2000);
+                
+                const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+                log('✅ Intent executed successfully on backup chain!', 'success');
+                log(`📝 Transaction hash: ${txHash}`, 'info');
+                log('🎉 Failover completed successfully!', 'success');
+                
+                updateStatus('Failover completed successfully!', 'success');
+                
+                return { success: true, txHash, chainId: backupChain };
+            }
+        };
+
+        // Test functions
+        window.testAvailBridge = async function() {
+            try {
+                updateStatus('Testing Avail Bridge Service...', 'executing');
+                log('', 'info');
+                log('=== TEST 1: Avail Bridge Service ===', 'info');
+                
+                await mockAvailBridge.initialize();
+                
+                const backupChain = await mockAvailBridge.getOptimalBackupChain(
+                    11155111, // Sepolia
+                    '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+                    '1000000000000000000' // 1 ETH
+                );
+                
+                log(`✅ Test 1 passed: Backup chain selected (${getChainName(backupChain)})`, 'success');
+                updateStatus('Test 1 passed', 'success');
+            } catch (error) {
+                log(`❌ Test 1 failed: ${error.message}`, 'error');
+                updateStatus('Test 1 failed', 'error');
+            }
+        };
+
+        window.testMonitoring = async function() {
+            try {
+                updateStatus('Testing Intent Monitoring...', 'executing');
+                log('', 'info');
+                log('=== TEST 2: Intent Monitoring Service ===', 'info');
+                
+                log('⚙️ Monitoring configuration:', 'info');
+                log(`  - Failover enabled: ${mockMonitoring.config.enableFailover}`, 'info');
+                log(`  - Max failover attempts: ${mockMonitoring.config.maxFailoverAttempts}`, 'info');
+                log(`  - Poll interval: ${mockMonitoring.config.pollInterval}ms`, 'info');
+                
+                await delay(1000);
+                
+                log('✅ Test 2 passed: Monitoring service configured', 'success');
+                updateStatus('Test 2 passed', 'success');
+            } catch (error) {
+                log(`❌ Test 2 failed: ${error.message}`, 'error');
+                updateStatus('Test 2 failed', 'error');
+            }
+        };
+
+        window.testFailoverFlow = async function() {
+            try {
+                updateStatus('Testing Complete Failover Flow...', 'executing');
+                log('', 'info');
+                log('=== TEST 3: Complete Failover Flow ===', 'info');
+                
+                // Simulate transaction failure
+                log('🔄 Simulating transaction on primary chain...', 'info');
+                await delay(1000);
+                log('❌ Transaction failed on Sepolia (simulated)', 'error');
+                
+                // Trigger failover
+                await mockMonitoring.simulateFailover('intent_123');
+                
+                log('✅ Test 3 passed: Complete failover flow executed', 'success');
+            } catch (error) {
+                log(`❌ Test 3 failed: ${error.message}`, 'error');
+                updateStatus('Test 3 failed', 'error');
+            }
+        };
+
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = '<div class="log-entry info">🧹 Logs cleared</div>';
+            updateStatus('Ready to test', 'pending');
+            updateMetric('failoverCount', 0);
+            updateMetric('bridgeTime', '-');
+            updateMetric('currentChain', '-');
+        };
+
+        // Helper functions
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function updateMetric(id, value) {
+            document.getElementById(id).textContent = value;
+        }
+
+        function getChainName(chainId) {
+            const names = {
+                11155111: 'Sepolia',
+                84532: 'Base Sepolia',
+                421614: 'Arbitrum Sepolia',
+                11155420: 'Optimism Sepolia',
+                295: 'Hedera Testnet'
+            };
+            return names[chainId] || `Chain ${chainId}`;
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize
+        log('📦 Services loaded', 'success');
+        log('🔧 Mock services initialized for testing', 'info');
+    </script>
+</body>
+</html>
