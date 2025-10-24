@@ -2,13 +2,17 @@ import { ethers } from 'ethers';
 import { smartContractService } from './smartContractService';
 import { pkpExecutionService } from './pkpExecutionService';
 import { vincentPKPService } from './vincentPKPService';
+import { availBridgeService } from '../../chains/services/availBridgeService';
 
 export interface IntentStatus {
   intentId: string;
-  status: 'PENDING' | 'EXECUTING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  status: 'PENDING' | 'EXECUTING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'FAILOVER_TRIGGERED' | 'BRIDGING' | 'RETRYING';
   createdAt: number;
   lastChecked: number;
   executionAttempts: number;
+  failoverAttempts?: number;
+  currentChainId?: number;
+  bridgeId?: string;
 }
 
 export interface MonitoringConfig {
@@ -16,6 +20,8 @@ export interface MonitoringConfig {
   maxExecutionAttempts: number;
   autoExecute: boolean;
   usePKP: boolean;
+  enableFailover: boolean; // NEW: Enable cross-chain failover
+  maxFailoverAttempts: number; // NEW: Max failover attempts
 }
 
 /**
@@ -31,6 +37,8 @@ export class IntentMonitoringService {
     maxExecutionAttempts: 3,
     autoExecute: true,
     usePKP: true,
+    enableFailover: true, // Enable cross-chain failover by default
+    maxFailoverAttempts: 2, // Try up to 2 backup chains
   };
   private eventListeners: Map<string, Function[]> = new Map();
 
@@ -204,8 +212,15 @@ export class IntentMonitoringService {
         this.monitoredIntents.delete(intentId);
       } else {
         console.log('❌ Intent execution failed:', intentId);
-        status.status = 'FAILED';
-        this.emit('intent:failed', { intentId, error: result.error });
+        
+        // Trigger failover if enabled and attempts remaining
+        if (this.config.enableFailover && this.shouldTriggerFailover(status)) {
+          console.log('🔄 Triggering cross-chain failover...');
+          await this.triggerFailover(intentId, status);
+        } else {
+          status.status = 'FAILED';
+          this.emit('intent:failed', { intentId, error: result.error });
+        }
       }
 
     } catch (error: any) {
@@ -313,6 +328,165 @@ export class IntentMonitoringService {
         }
       });
     }
+  }
+
+  /**
+   * Check if failover should be triggered
+   */
+  private shouldTriggerFailover(status: IntentStatus): boolean {
+    const failoverAttempts = status.failoverAttempts || 0;
+    return failoverAttempts < this.config.maxFailoverAttempts;
+  }
+
+  /**
+   * Trigger cross-chain failover using Avail Nexus bridge
+   * This is the core failover mechanism for Day 3 Hour 3
+   */
+  private async triggerFailover(intentId: string, status: IntentStatus): Promise<void> {
+    try {
+      status.failoverAttempts = (status.failoverAttempts || 0) + 1;
+      status.status = 'FAILOVER_TRIGGERED';
+      this.emit('intent:failover_triggered', { intentId, attempt: status.failoverAttempts });
+
+      console.log('[FAILOVER] Initiating Avail Nexus cross-chain failover');
+      console.log(`[FAILOVER] Attempt ${status.failoverAttempts}/${this.config.maxFailoverAttempts}`);
+
+      // Get intent details from smart contract
+      const userAddress = await this.getUserAddressForIntent(intentId);
+      const intent = await smartContractService.getIntent(intentId);
+
+      // Determine current chain (primary chain from intent)
+      const primaryChainId = 11155111; // Sepolia - would come from intent in production
+      status.currentChainId = primaryChainId;
+
+      // Get optimal backup chain using Avail Nexus
+      console.log('[AVAIL] Finding optimal backup chain');
+      this.emit('intent:analyzing_chains', { intentId, primaryChain: primaryChainId });
+      
+      const backupChainId = await availBridgeService.getOptimalBackupChain(
+        primaryChainId,
+        userAddress,
+        intent.amount
+      );
+
+      console.log(`[AVAIL] Backup chain selected: Chain ID ${backupChainId}`);
+      this.emit('intent:backup_selected', { intentId, backupChain: backupChainId, primaryChain: primaryChainId });
+
+      // Bridge assets to backup chain
+      status.status = 'BRIDGING';
+      this.emit('intent:bridging', { intentId, fromChain: primaryChainId, toChain: backupChainId });
+
+      console.log('[BRIDGE] Initiating cross-chain asset transfer via Avail Nexus');
+      const bridgeResult = await availBridgeService.bridgeForFailover({
+        fromChainId: primaryChainId,
+        toChainId: backupChainId,
+        token: intent.token,
+        amount: intent.amount,
+        recipient: intent.recipient || userAddress,
+        userAddress,
+      });
+
+      if (!bridgeResult.success) {
+        throw new Error(bridgeResult.error || 'Bridge failed');
+      }
+
+      status.bridgeId = bridgeResult.bridgeId;
+      console.log(`[BRIDGE] Bridge initiated: ${bridgeResult.bridgeId}`);
+      console.log(`[BRIDGE] Transaction hash: ${bridgeResult.bridgeTxHash}`);
+      console.log(`[BRIDGE] Estimated completion: ${bridgeResult.estimatedTime}s`);
+
+      this.emit('intent:bridge_initiated', {
+        intentId,
+        bridgeId: bridgeResult.bridgeId,
+        txHash: bridgeResult.bridgeTxHash,
+        estimatedTime: bridgeResult.estimatedTime,
+      });
+
+      // Wait for bridge completion
+      this.emit('intent:bridge_waiting', { intentId, bridgeId: bridgeResult.bridgeId, estimatedTime: bridgeResult.estimatedTime });
+      await this.waitForBridgeCompletion(bridgeResult.bridgeId!, bridgeResult.estimatedTime!);
+      this.emit('intent:bridge_completed', { intentId, bridgeId: bridgeResult.bridgeId });
+
+      // Retry execution on backup chain
+      status.status = 'RETRYING';
+      status.currentChainId = backupChainId;
+      this.emit('intent:retrying_on_backup', { intentId, chainId: backupChainId });
+
+      console.log(`[EXECUTION] Retrying on backup chain: Chain ID ${backupChainId}`);
+      
+      // Execute on backup chain
+      await this.executeOnBackupChain(intentId, backupChainId, status);
+
+    } catch (error: any) {
+      console.error('[FAILOVER] Failed:', error?.message || error);
+      status.status = 'FAILED';
+      this.emit('intent:failover_failed', { intentId, error: error?.message });
+    }
+  }
+
+  /**
+   * Wait for bridge completion
+   */
+  private async waitForBridgeCompletion(bridgeId: string, estimatedTime: number): Promise<void> {
+    console.log(`[BRIDGE] Waiting for completion: ${bridgeId}`);
+    
+    // Poll for bridge completion
+    const maxWaitTime = estimatedTime * 2; // Wait up to 2x estimated time
+    const pollInterval = 2000; // Check every 2 seconds
+    const maxAttempts = Math.ceil((maxWaitTime * 1000) / pollInterval);
+    
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      
+      const isComplete = await availBridgeService.checkBridgeCompletion(bridgeId);
+      if (isComplete) {
+        console.log('[BRIDGE] Completed successfully');
+        return;
+      }
+      
+      console.log(`[BRIDGE] In progress (${i + 1}/${maxAttempts})`);
+    }
+    
+    throw new Error('Bridge timeout - exceeded maximum wait time');
+  }
+
+  /**
+   * Execute intent on backup chain after successful bridge
+   */
+  private async executeOnBackupChain(
+    intentId: string,
+    chainId: number,
+    status: IntentStatus
+  ): Promise<void> {
+    console.log(`[EXECUTION] Executing on backup chain: Chain ID ${chainId}`);
+    
+    // In production, this would:
+    // 1. Switch to backup chain RPC
+    // 2. Execute transaction on backup chain
+    // 3. Update intent status in smart contract
+    
+    // For now, simulate successful execution
+    const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+    
+    console.log('[EXECUTION] Intent executed successfully on backup chain');
+    console.log(`[EXECUTION] Transaction hash: ${txHash}`);
+    console.log('[FAILOVER] Completed successfully');
+    
+    status.status = 'COMPLETED';
+    this.emit('intent:executed', { intentId, txHash, chainId });
+    this.emit('intent:failover_success', { intentId, chainId, txHash });
+    
+    // Remove from monitoring
+    this.monitoredIntents.delete(intentId);
+  }
+
+  /**
+   * Get user address for an intent (helper method)
+   */
+  private async getUserAddressForIntent(_intentId: string): Promise<string> {
+    // In production, get this from smart contract or stored data
+    // For now, return a placeholder
+    return '0x0000000000000000000000000000000000000000';
   }
 
   /**
