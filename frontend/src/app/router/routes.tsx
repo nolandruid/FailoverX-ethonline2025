@@ -4,6 +4,7 @@ import { Dashboard } from '@/modules/dashboard/components/pages'
 import { Login, SignUp } from '@/modules/auth/components/pages'
 import StandaloneTest from '@/modules/transactions/components/pages/StandaloneTest'
 import { TransactionScheduler } from '@/modules/transactions/components/pages/TransactionScheduler'
+import { AvailBridgeTest } from '@/modules/transactions/components/pages/AvailBridgeTest'
 import { TestComponent } from '../../TestComponent'
 import { GasPriceTest } from '../../components/GasPriceTest'
 import { ChainSelectionTest } from '../../components/ChainSelectionTest'
@@ -38,6 +39,10 @@ export const routes: Route[] = [
   {
     path: '/transaction-simulation-test',
     element: <TransactionSimulationTest />,
+  },
+  {
+    path: '/avail-bridge-test',
+    element: <AvailBridgeTest />,
   },
   {
     path: ROUTES.TRANSACTIONS.path,
