@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { AppRouter } from './app/router/AppRouter'
+import { NotificationProvider, TransactionPopupProvider } from '@blockscout/app-sdk'
 import './styles/globals.css'
 import './styles/index.css'
 
@@ -16,6 +17,10 @@ if (typeof globalThis.process === 'undefined') {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppRouter />
+    <NotificationProvider>
+      <TransactionPopupProvider>
+        <AppRouter />
+      </TransactionPopupProvider>
+    </NotificationProvider>
   </StrictMode>,
 )
