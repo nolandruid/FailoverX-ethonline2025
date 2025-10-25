@@ -3,9 +3,11 @@ import { ethers } from 'ethers';
 import { useWalletConnection } from '../../hooks/useWalletConnection';
 import { usePKP } from '../../hooks/usePKP';
 import { useIntentMonitoring } from '../../hooks/useIntentMonitoring';
+import { useBlockscoutNotifications } from '../../hooks/useBlockscoutNotifications';
 import type { TransactionFormData } from '../../types';
 import { smartContractService, type CreateIntentParams } from '../../services/smartContractService';
 import { vincentPKPService, type TransactionAnalysis } from '../../services/vincentPKPService';
+import { BlockscoutTransactionWidget } from '../BlockscoutTransactionWidget';
 import { Button } from '@/globals/components/ui/button';
 import { Card } from '@/globals/components/ui/card';
 import { Input } from '@/globals/components/ui/input';
@@ -70,6 +72,34 @@ export const TransactionScheduler = () => {
     initializePKP,
     events: monitoringEvents,
   } = useIntentMonitoring();
+
+  // Blockscout notifications hook
+  const { showTransactionToast, showTransactionHistory } = useBlockscoutNotifications();
+
+  // Track recent transactions for Blockscout widget
+  const [recentTransactions, setRecentTransactions] = useState<Array<{
+    hash: string;
+    chainId: number;
+    timestamp: number;
+  }>>([]);
+
+  // Listen for monitoring events and show Blockscout notifications
+  useEffect(() => {
+    const lastEvent = monitoringEvents[monitoringEvents.length - 1];
+    if (!lastEvent) return;
+
+    // Show Blockscout toast for executed transactions
+    if (lastEvent.type === 'intent:executed' && lastEvent.data?.txHash && chainId) {
+      showTransactionToast(chainId, lastEvent.data.txHash);
+      
+      // Add to recent transactions
+      setRecentTransactions(prev => [{
+        hash: lastEvent.data.txHash,
+        chainId: chainId,
+        timestamp: Date.now(),
+      }, ...prev.slice(0, 9)]); // Keep last 10
+    }
+  }, [monitoringEvents, chainId, showTransactionToast]);
 
   const handleConnect = async () => {
     await connect();
@@ -136,6 +166,10 @@ export const TransactionScheduler = () => {
       setIntentId(newIntentId);
       
       console.log('✅ Transaction intent created:', newIntentId);
+      
+      // Show Blockscout notification if we have a transaction hash
+      // Note: Intent creation returns intent ID, actual execution will have tx hash
+      // We'll show notifications when monitoring detects execution
     } catch (error: any) {
       console.error('❌ Failed to create transaction intent:', error);
       setSubmitError(error?.message || 'Failed to create transaction intent');
@@ -625,6 +659,15 @@ export const TransactionScheduler = () => {
           </div>
         </Card>
 
+        {/* Blockscout Transaction Widget */}
+        {isConnected && chainId && (
+          <BlockscoutTransactionWidget
+            chainId={chainId}
+            userAddress={address || undefined}
+            recentTransactions={recentTransactions}
+          />
+        )}
+
         {/* Enhanced Info Card */}
         <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <h3 className="font-semibold mb-3 text-blue-800">🚀 Smart Transaction Scheduler</h3>
@@ -636,6 +679,7 @@ export const TransactionScheduler = () => {
                 <li>• Gas price optimization</li>
                 <li>• PKP-powered execution</li>
                 <li>• Real-time monitoring</li>
+                <li>• Blockscout transaction tracking</li>
               </ul>
             </div>
             <div>
