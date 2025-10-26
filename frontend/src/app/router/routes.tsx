@@ -4,6 +4,7 @@ import { Dashboard } from '@/modules/dashboard/components/pages'
 import { Login, SignUp } from '@/modules/auth/components/pages'
 import StandaloneTest from '@/modules/transactions/components/pages/StandaloneTest'
 import { TransactionScheduler } from '@/modules/transactions/components/pages/TransactionScheduler'
+import { TransactionHistory } from '@/modules/transactions/components/pages/TransactionHistory'
 import { AvailBridgeTest } from '@/modules/transactions/components/pages/AvailBridgeTest'
 import { TestComponent } from '../../TestComponent'
 import { GasPriceTest } from '../../components/GasPriceTest'
@@ -22,7 +23,7 @@ interface Route {
 export const routes: Route[] = [
   {
     path: '/',
-    element: <StandaloneTest />,
+    element: <Dashboard />,
   },
   {
     path: '/scheduler',
@@ -47,6 +48,10 @@ export const routes: Route[] = [
   {
     path: ROUTES.TRANSACTIONS.path,
     element: <TransactionScheduler />,
+  },
+  {
+    path: ROUTES.TRANSACTION_HISTORY.path,
+    element: <TransactionHistory />,
   },
   {
     path: ROUTES.LOGIN.path,

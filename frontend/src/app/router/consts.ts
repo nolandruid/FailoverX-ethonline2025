@@ -15,6 +15,10 @@ export const ROUTES = {
         path: '/transactions',
         name: 'Transactions'
     },
+    TRANSACTION_HISTORY: {
+        path: '/history',
+        name: 'Transaction History'
+    },
     METAMASK_TEST: {
         path: '/test-metamask',
         name: 'MetaMask Test'
