@@ -401,6 +401,15 @@ export const TransactionScheduler = () => {
                       const result = await vincentPKPService.createAIPKP();
                       if (result.success && result.pkpInfo) {
                         setVincentPkp(result.pkpInfo);
+                        
+                        // Automatically initialize PKP execution service
+                        console.log('🔄 Auto-initializing PKP execution service...');
+                        await initializePKP({
+                          pkpPublicKey: result.pkpInfo.publicKey,
+                          pkpEthAddress: result.pkpInfo.ethAddress,
+                          vincentAgentId: result.pkpInfo.vincentAgentId,
+                        });
+                        console.log('✅ PKP execution service ready for autonomous transactions');
                       } else {
                         setSubmitError(result.message);
                       }
