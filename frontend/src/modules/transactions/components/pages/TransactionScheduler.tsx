@@ -53,6 +53,7 @@ export const TransactionScheduler = () => {
   const [primaryChain, setPrimaryChain] = useState<number>(11155111); // Default to Sepolia
   const [failoverChains, setFailoverChains] = useState<number[]>([]); // Start with empty array
   const [maxGasPrice, setMaxGasPrice] = useState('50'); // 50 gwei
+  const [forceFail, setForceFail] = useState(false); // Demo mode to test failover
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [intentId, setIntentId] = useState<string | null>(null);
@@ -190,6 +191,7 @@ export const TransactionScheduler = () => {
         failoverChains,
         maxGasPrice,
         value: formData.token === 'ETH' ? formData.amount : '0',
+        forceFail, // Demo mode to test failover
       };
 
       console.log('📋 Intent params:', intentParams);
@@ -694,6 +696,21 @@ export const TransactionScheduler = () => {
               <p className="text-xs text-gray-400">
                 Transaction will only execute if gas price is below this threshold
               </p>
+            </div>
+
+            {/* Demo Mode: Force Fail */}
+            <div className="flex items-center space-x-2 p-3 bg-orange-500/10 border border-orange-500/30 rounded-md">
+              <input
+                type="checkbox"
+                id="forceFail"
+                checked={forceFail}
+                onChange={(e) => setForceFail(e.target.checked)}
+                className="w-4 h-4 text-orange-500 bg-[#151815] border-orange-500/30 rounded focus:ring-orange-500 focus:ring-2"
+              />
+              <label htmlFor="forceFail" className="text-sm text-orange-300 cursor-pointer flex items-center gap-2">
+                <span>🧪 Demo Mode: Force Failure</span>
+                <span className="text-xs text-orange-400">(Tests cross-chain failover)</span>
+              </label>
             </div>
 
             {/* AI Analysis Section */}

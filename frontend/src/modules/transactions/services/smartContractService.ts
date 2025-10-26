@@ -43,6 +43,7 @@ export interface CreateIntentParams {
   failoverChains: number[];
   maxGasPrice: string;
   value?: string; // For ETH transfers
+  forceFail?: boolean; // Demo mode: force failure to test failover
 }
 
 /**
@@ -112,7 +113,12 @@ export class SmartContractService {
 
       // Contract function: createIntent(targetToken, amount, recipient, actionType, callData, executeAfter, deadline, failoverChains, maxGasPrice, slippageTolerance)
       const executeAfter = Math.floor(Date.now() / 1000); // Execute immediately
-      const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour deadline
+      
+      // Check if demo mode is enabled to force failure (for testing failover)
+      const deadline = params.forceFail 
+        ? Math.floor(Date.now() / 1000) - 60 // Expired deadline (1 minute ago) - will trigger failover
+        : Math.floor(Date.now() / 1000) + 3600; // 1 hour deadline
+      
       const slippageTolerance = 300; // 3% slippage tolerance
       
       const tx = await this.contract.createIntent(
