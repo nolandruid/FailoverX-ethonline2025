@@ -5,6 +5,7 @@ import { useWalletConnection } from '../../hooks/useWalletConnection';
 import { usePKP } from '../../hooks/usePKP';
 import { useIntentMonitoring } from '../../hooks/useIntentMonitoring';
 import { useBlockscoutNotifications } from '../../hooks/useBlockscoutNotifications';
+import { useGasPrices } from '@/modules/chains/hooks/useGasPrices';
 import type { TransactionFormData } from '../../types';
 import { smartContractService, type CreateIntentParams } from '../../services/smartContractService';
 import { vincentPKPService, type TransactionAnalysis } from '../../services/vincentPKPService';
@@ -87,6 +88,16 @@ export const TransactionScheduler = () => {
 
   // Blockscout notifications hook
   const { showTransactionToast, showTransactionHistory } = useBlockscoutNotifications();
+
+  // Gas prices hook
+  const { 
+    gasPrices, 
+    congestion, 
+    cheapestChain, 
+    isLoading: isLoadingGas,
+    lastUpdated: gasLastUpdated,
+    refetch: refetchGas 
+  } = useGasPrices({ refetchInterval: 30000 });
 
   // Track recent transactions for Blockscout widget
   const [recentTransactions, setRecentTransactions] = useState<Array<{
@@ -396,6 +407,117 @@ export const TransactionScheduler = () => {
                 </Button>
               </div>
             </div>
+          )}
+        </Card>
+
+        {/* Gas Price Monitor */}
+        <Card className="p-6 bg-[#1c1f1c]/80 border-[#a3e635]/30 backdrop-blur-xl shadow-lg">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-white">⛽ Live Gas Prices</h2>
+            <div className="flex items-center gap-3">
+              {gasLastUpdated && (
+                <span className="text-xs text-gray-400">
+                  Updated: {gasLastUpdated.toLocaleTimeString()}
+                </span>
+              )}
+              <Button
+                size="sm"
+                onClick={refetchGas}
+                variant="outline"
+                className="h-7 text-xs bg-[#2a2f2a] hover:bg-[#3a3f3a] border-[#a3e635]/30 text-white rounded-md"
+              >
+                Refresh
+              </Button>
+            </div>
+          </div>
+
+          {isLoadingGas ? (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="p-3 bg-[#151815] rounded-md animate-pulse">
+                  <div className="h-4 bg-[#2a2f2a] rounded mb-2"></div>
+                  <div className="h-6 bg-[#2a2f2a] rounded"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Cheapest Chain Highlight */}
+              {cheapestChain && (
+                <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-md">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🏆</span>
+                    <span className="text-sm text-green-400 font-medium">
+                      Cheapest: {cheapestChain.chainName}
+                    </span>
+                    <span className="text-lg font-bold text-green-400">
+                      {cheapestChain.gasPrice} Gwei
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Gas Prices Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {gasPrices.map((gasPrice) => {
+                  const congestionData = congestion.find(c => c.chainId === gasPrice.chainId);
+                  const isCheapest = cheapestChain?.chainId === gasPrice.chainId;
+                  
+                  return (
+                    <div
+                      key={gasPrice.chainId}
+                      className={`p-3 rounded-md border ${
+                        isCheapest
+                          ? 'border-green-500/50 bg-green-500/10'
+                          : gasPrice.status === 'error'
+                          ? 'border-red-500/30 bg-red-500/10'
+                          : 'border-[#2a2f2a] bg-[#151815]'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="text-xs font-medium text-gray-300 truncate">
+                          {gasPrice.chainName.replace(' Sepolia', '').replace(' Testnet', '')}
+                        </h3>
+                        {gasPrice.status === 'success' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400">
+                            Live
+                          </span>
+                        )}
+                      </div>
+                      
+                      {gasPrice.status === 'success' ? (
+                        <>
+                          <div className="text-lg font-bold text-white mb-1">
+                            {gasPrice.gasPrice} <span className="text-[10px] font-normal text-gray-400">Gwei</span>
+                          </div>
+                          
+                          {congestionData && (
+                            <div className="flex items-center gap-1">
+                              <div className={`w-1.5 h-1.5 rounded-full ${
+                                congestionData.level === 'low' ? 'bg-green-400' :
+                                congestionData.level === 'medium' ? 'bg-yellow-400' :
+                                'bg-red-400'
+                              }`}></div>
+                              <span className={`text-[10px] capitalize ${
+                                congestionData.level === 'low' ? 'text-green-400' :
+                                congestionData.level === 'medium' ? 'text-yellow-400' :
+                                'text-red-400'
+                              }`}>
+                                {congestionData.level}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-xs text-red-400">
+                          Unavailable
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </Card>
 
