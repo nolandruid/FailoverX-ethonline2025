@@ -27,7 +27,7 @@ const StandaloneTest = () => {
     84532: 'Base Sepolia',
     137: 'Polygon',
     80001: 'Mumbai Testnet',
-    295: 'Hedera Testnet',
+    296: 'Hedera Testnet',
   };
 
   // Use multi-chain balance hook

@@ -173,7 +173,7 @@ class ChainSelectionService {
       84532: 0.88,     // Base Sepolia - newer but Coinbase-backed
       421614: 0.92,    // Arbitrum Sepolia - proven L2 tech
       11155420: 0.90,  // Optimism Sepolia - established L2
-      295: 0.93,       // Hedera - enterprise-grade but different consensus
+      296: 0.93,       // Hedera - enterprise-grade but different consensus
     };
 
     return reliabilityMap[chainId] || 0.7;

@@ -14,7 +14,7 @@ const CHAIN_NAMES: Record<number, string> = {
   84532: 'Base Sepolia',
   421614: 'Arbitrum Sepolia',
   11155420: 'Optimism Sepolia',
-  295: 'Hedera Testnet',
+  296: 'Hedera Testnet',
 };
 
 const STATUS_COLORS: Record<string, string> = {

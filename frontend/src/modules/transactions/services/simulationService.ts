@@ -363,7 +363,7 @@ class TransactionSimulationService {
       84532: 0.95,    // Base Sepolia
       421614: 0.96,   // Arbitrum Sepolia
       11155420: 0.94, // Optimism Sepolia
-      295: 0.97,      // Hedera Testnet
+      296: 0.97,      // Hedera Testnet
     };
 
     return reliabilityMap[chainId] || 0.9;

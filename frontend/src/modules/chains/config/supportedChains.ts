@@ -38,7 +38,7 @@ export const SUPPORTED_CHAINS: Chain[] = [
     testnet: true,
   },
   {
-    id: 295,
+    id: 296,
     name: 'Hedera Testnet',
     nativeCurrency: {
       name: 'HBAR',

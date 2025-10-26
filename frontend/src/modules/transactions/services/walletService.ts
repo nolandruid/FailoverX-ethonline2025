@@ -6,7 +6,7 @@ const CHAIN_NAMES: Record<number, string> = {
   84532: 'Base Sepolia',
   137: 'Polygon',
   80001: 'Mumbai Testnet',
-  295: 'Hedera Testnet',
+  296: 'Hedera Testnet',
 };
 
 // Extend Window interface for ethereum

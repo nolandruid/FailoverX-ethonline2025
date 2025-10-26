@@ -35,7 +35,9 @@
     "hedera:compile": "node hedera/compile-contract.js",
     "hedera:deploy": "node hedera/deploy-hello-world.js",
     "hedera:test": "node hedera/test-connection.js",
-    "hedera:test-contract": "node hedera/test-contract.js"
+    "hedera:test-contract": "node hedera/test-contract.js",
+    "test:integration": "node tests/hedera-pkp-integration-test.js",
+    "test:frontend": "node tests/frontend-component-test.js"
   },
   "name": "ethonline2025",
   "version": "1.0.0",

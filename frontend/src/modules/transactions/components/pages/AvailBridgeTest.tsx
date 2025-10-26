@@ -21,7 +21,7 @@ export const AvailBridgeTest = () => {
   // Bridge form state
   const [amount, setAmount] = useState('0.01');
   const [fromChain, setFromChain] = useState('11155111'); // Sepolia
-  const [toChain, setToChain] = useState('295'); // Hedera
+  const [toChain, setToChain] = useState('296'); // Hedera
   
   // Results
   const [balances, setBalances] = useState<any>(null);
@@ -95,7 +95,7 @@ export const AvailBridgeTest = () => {
       );
       
       setBalances({ backupChain });
-      setSuccess(`✅ Optimal backup chain: ${backupChain} (Hedera: 295, Base: 84532)`);
+      setSuccess(`✅ Optimal backup chain: ${backupChain} (Hedera: 296, Base: 84532)`);
       console.log('[TEST] ✅ Balance check complete');
       
     } catch (err: any) {
@@ -272,9 +272,9 @@ export const AvailBridgeTest = () => {
                 type="text" 
                 value={toChain}
                 onChange={(e) => setToChain(e.target.value)}
-                placeholder="295"
+                placeholder="296"
               />
-              <p className="text-xs text-gray-500 mt-1">Hedera: 295, Base: 84532</p>
+              <p className="text-xs text-gray-500 mt-1">Hedera: 296, Base: 84532</p>
             </div>
           </div>
 

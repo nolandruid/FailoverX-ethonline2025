@@ -34,7 +34,7 @@ const SUPPORTED_CHAINS = [
     symbol: 'ETH',
   },
   {
-    chainId: 295,
+    chainId: 296,
     name: 'Hedera Testnet',
     rpcUrl: 'https://testnet.hashio.io/api',
     symbol: 'HBAR',

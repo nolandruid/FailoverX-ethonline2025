@@ -51,7 +51,7 @@ const CHAIN_NAMES: Record<number, string> = {
   84532: 'base-sepolia',
   421614: 'arbitrum-sepolia',
   11155420: 'optimism-sepolia',
-  295: 'hedera-testnet',
+  296: 'hedera-testnet',
 };
 
 // Token symbol mapping (ETH address to token symbol)
@@ -254,7 +254,7 @@ export class AvailBridgeService {
    */
   private estimateBridgeTime(_fromChainId: number, toChainId: number): number {
     // Hedera has fastest finality (3-5 seconds)
-    if (toChainId === 295) {
+    if (toChainId === 296) {
       return 5;
     }
 
@@ -282,7 +282,7 @@ export class AvailBridgeService {
 
     // Priority order for backup chains (based on cost and speed)
     const backupPriority = [
-      295,      // Hedera (fastest, cheapest)
+      296,      // Hedera (fastest, cheapest)
       84532,    // Base Sepolia
       421614,   // Arbitrum Sepolia
       11155420, // Optimism Sepolia

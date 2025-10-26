@@ -35,7 +35,7 @@ const SUPPORTED_CHAINS: ChainConfig[] = [
     congestionThreshold: 0.6, // Moderate
   },
   {
-    chainId: 295,
+    chainId: 296,
     name: 'Hedera Testnet',
     rpcUrl: 'https://testnet.hashio.io/api',
     symbol: 'HBAR',
@@ -64,7 +64,7 @@ class GasPriceService {
       // Special case: Hedera uses HBAR, not ETH gas pricing
       // Hedera transactions cost ~$0.0001 USD (≈0.0005 HBAR)
       // We use a fixed low estimate since Hedera doesn't use Gwei
-      if (chainConfig.chainId === 295) {
+      if (chainConfig.chainId === 296) {
         const hederaGasPrice: GasPrice = {
           chainId: chainConfig.chainId,
           chainName: chainConfig.name,
