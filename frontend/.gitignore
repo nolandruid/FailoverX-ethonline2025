@@ -40,3 +40,10 @@ coverage
 
 # Misc
 .cache
+PRIZE_ELIGIBILITY.md
+TASK_1_AVAIL_INTEGRATION.md
+TROUBLESHOOTING.md
+felipe-test-guide.md
+what-in-works.md
+frontend/src/TestComponent.tsx
+frontend/src/components/GasPriceTest.tsx
