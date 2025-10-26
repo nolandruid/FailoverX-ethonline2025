@@ -870,28 +870,50 @@ export const TransactionScheduler = () => {
           />
         )}
 
-        {/* Enhanced Info Card */}
-        <Card className="p-6 bg-[#1c1f1c]/80 border-blue-500/30 backdrop-blur-xl shadow-lg">
-          <h3 className="font-semibold mb-3 text-blue-400">FailoverX</h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <h4 className="font-medium mb-2 text-[#a3e635]">Features</h4>
-              <ul className="text-gray-300 space-y-1">
-                <li>• Cross-chain failover automation</li>
-                <li>• Gas price optimization</li>
-                <li>• PKP-powered execution</li>
-                <li>• Real-time monitoring</li>
-                <li>• Blockscout transaction tracking</li>
-              </ul>
+        {/* Sponsor Integration Footer */}
+        <Card className="p-6 bg-[#1c1f1c]/80 border-[#a3e635]/30 backdrop-blur-xl shadow-lg">
+          <h2 className="text-xl font-bold mb-6 text-center text-white">Powered By</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Avail Nexus Card */}
+            <div className="p-6 bg-[#151815] border border-[#a3e635]/20 rounded-lg hover:border-[#a3e635]/50 transition-all">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <img src="/avail-logo.png" alt="Avail Nexus" className="w-16 h-16 object-contain" />
+                <h3 className="text-lg font-bold text-white">Avail Nexus</h3>
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                  ✅ Integrated
+                </Badge>
+                <p className="text-xs text-gray-400">
+                  Cross-chain bridging & unified balance queries
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-medium mb-2 text-[#a3e635]">Supported Chains</h4>
-              <ul className="text-gray-300 space-y-1">
-                <li>• Ethereum Sepolia</li>
-                <li>• Polygon Mumbai</li>
-                <li>• Arbitrum Sepolia</li>
-                <li>• Hedera Testnet</li>
-              </ul>
+
+            {/* Hedera Card */}
+            <div className="p-6 bg-[#151815] border border-[#a3e635]/20 rounded-lg hover:border-[#a3e635]/50 transition-all">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <img src="/hedera-logo.svg" alt="Hedera" className="w-16 h-16 object-contain" />
+                <h3 className="text-lg font-bold text-white">Hedera</h3>
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                  ✅ Integrated
+                </Badge>
+                <p className="text-xs text-gray-400">
+                  Ultra-low cost execution ($0.0001/tx)
+                </p>
+              </div>
+            </div>
+
+            {/* Lit Protocol Vincent Card */}
+            <div className="p-6 bg-[#151815] border border-[#a3e635]/20 rounded-lg hover:border-[#a3e635]/50 transition-all">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <img src="/lit-logo.jpg" alt="Lit Protocol" className="w-16 h-16 object-contain rounded-lg" />
+                <h3 className="text-lg font-bold text-white">Lit Protocol Vincent</h3>
+                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                  ✅ Integrated
+                </Badge>
+                <p className="text-xs text-gray-400">
+                  AI-powered PKPs & intelligent routing
+                </p>
+              </div>
             </div>
           </div>
         </Card>

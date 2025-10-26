@@ -474,6 +474,56 @@ export function Dashboard() {
             <TransactionHistory />
           </div>
         )}
+
+        {/* Sponsor Integration Footer - Only show on dashboard tab */}
+        {activeSection === 'dashboard' && (
+          <Card className="p-6 bg-[#1c1f1c]/80 border-[#a3e635]/30 backdrop-blur-xl shadow-lg">
+            <h2 className="text-xl font-bold mb-6 text-center text-white">Powered By</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Avail Nexus Card */}
+              <div className="p-6 bg-[#151815] border border-[#a3e635]/20 rounded-lg hover:border-[#a3e635]/50 transition-all">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <img src="/avail-logo.png" alt="Avail Nexus" className="w-16 h-16 object-contain" />
+                  <h3 className="text-lg font-bold text-white">Avail Nexus</h3>
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                    ✅ Integrated
+                  </Badge>
+                  <p className="text-xs text-gray-400">
+                    Cross-chain bridging & unified balance queries
+                  </p>
+                </div>
+              </div>
+
+              {/* Hedera Card */}
+              <div className="p-6 bg-[#151815] border border-[#a3e635]/20 rounded-lg hover:border-[#a3e635]/50 transition-all">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <img src="/hedera-logo.svg" alt="Hedera" className="w-16 h-16 object-contain" />
+                  <h3 className="text-lg font-bold text-white">Hedera</h3>
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                    ✅ Integrated
+                  </Badge>
+                  <p className="text-xs text-gray-400">
+                    Ultra-low cost execution ($0.0001/tx)
+                  </p>
+                </div>
+              </div>
+
+              {/* Lit Protocol Vincent Card */}
+              <div className="p-6 bg-[#151815] border border-[#a3e635]/20 rounded-lg hover:border-[#a3e635]/50 transition-all">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <img src="/lit-logo.jpg" alt="Lit Protocol" className="w-16 h-16 object-contain rounded-lg" />
+                  <h3 className="text-lg font-bold text-white">Lit Protocol Vincent</h3>
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                    ✅ Integrated
+                  </Badge>
+                  <p className="text-xs text-gray-400">
+                    AI-powered PKPs & intelligent routing
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
