@@ -153,6 +153,18 @@ export class IntentMonitoringService {
     // Update last checked time
     status.lastChecked = Date.now();
 
+    // Skip if already executing or completed
+    if (status.status === 'EXECUTING') {
+      console.log('⏳ Intent already executing, skipping:', intentId);
+      return;
+    }
+
+    if (status.status === 'COMPLETED') {
+      console.log('✅ Intent already completed, removing from monitoring:', intentId);
+      this.monitoredIntents.delete(intentId);
+      return;
+    }
+
     // Check if we should execute
     if (!this.config.autoExecute) {
       console.log('⏸️ Auto-execution disabled for intent:', intentId);
