@@ -173,6 +173,13 @@ export const TransactionScheduler = () => {
     setSubmitError(null);
 
     try {
+      // Validate failover chains
+      if (failoverChains.length === 0) {
+        setSubmitError('Please select at least one failover chain');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Prepare intent parameters
       const intentParams: CreateIntentParams = {
         actionType: formData.action === 'TRANSFER' ? 0 : 1, // 0=TRANSFER, 1=SWAP
@@ -183,6 +190,8 @@ export const TransactionScheduler = () => {
         maxGasPrice,
         value: formData.token === 'ETH' ? formData.amount : '0',
       };
+
+      console.log('📋 Intent params:', intentParams);
 
       // Create transaction intent
       const newIntentId = await smartContractService.createIntent(intentParams);
@@ -628,7 +637,7 @@ export const TransactionScheduler = () => {
 
             {/* Failover Chains */}
             <div className="space-y-3">
-              <Label className="text-gray-300">Failover Chains (Optional)</Label>
+              <Label className="text-gray-300">Failover Chains (Required) *</Label>
               <div className="space-y-2">
                 {[
                   { id: 11155111, name: 'Sepolia' },
