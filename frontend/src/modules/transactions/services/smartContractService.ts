@@ -54,6 +54,7 @@ export class SmartContractService {
   private provider: ethers.providers.Web3Provider | null = null;
   private signer: ethers.Signer | null = null;
   private contractAddress: string | null = null;
+  private demoModeForceFailNext: boolean = false; // Demo mode flag
   
   // TEST MODE: Set to true to simulate failures for testing failover
   public testMode = false;
@@ -100,6 +101,12 @@ export class SmartContractService {
     try {
       console.log('🔄 Creating transaction intent...', params);
 
+      // Set demo mode flag if forceFail is enabled
+      if (params.forceFail) {
+        console.log('🧪 Demo mode enabled - next execution will fail to trigger failover');
+        this.demoModeForceFailNext = true;
+      }
+
       const txOptions: any = {
         gasLimit: 500000, // Set reasonable gas limit
       };
@@ -113,12 +120,7 @@ export class SmartContractService {
 
       // Contract function: createIntent(targetToken, amount, recipient, actionType, callData, executeAfter, deadline, failoverChains, maxGasPrice, slippageTolerance)
       const executeAfter = Math.floor(Date.now() / 1000); // Execute immediately
-      
-      // Check if demo mode is enabled to force failure (for testing failover)
-      const deadline = params.forceFail 
-        ? Math.floor(Date.now() / 1000) - 60 // Expired deadline (1 minute ago) - will trigger failover
-        : Math.floor(Date.now() / 1000) + 3600; // 1 hour deadline
-      
+      const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour deadline
       const slippageTolerance = 300; // 3% slippage tolerance
       
       const tx = await this.contract.createIntent(
@@ -244,10 +246,12 @@ export class SmartContractService {
     try {
       console.log('🔄 Executing intent:', intentId);
 
-      // TEST MODE: Simulate failure to test failover
-      if (this.testMode && this.simulateFailure) {
-        console.log('🧪 TEST MODE: Simulating transaction failure');
-        throw new Error('Simulated transaction failure for failover testing');
+      // DEMO MODE: Simulate Sepolia failure to trigger cross-chain failover
+      if (this.demoModeForceFailNext) {
+        console.log('🧪 DEMO MODE: Simulating Sepolia network failure');
+        console.log('🔄 This will trigger Avail Nexus bridge to failover chains');
+        this.demoModeForceFailNext = false; // Reset flag
+        throw new Error('Demo: Sepolia execution failed - triggering cross-chain failover via Avail Nexus');
       }
 
       const tx = await this.contract.executeIntent(intentId, {
