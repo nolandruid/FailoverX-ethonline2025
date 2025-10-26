@@ -641,9 +641,9 @@ export const TransactionScheduler = () => {
               <div className="space-y-2">
                 {[
                   { id: 11155111, name: 'Sepolia' },
+                  { id: 80001, name: 'Mumbai Testnet' },
                   { id: 421614, name: 'Arbitrum Sepolia' },
                   { id: 11155420, name: 'Optimism Sepolia' },
-                  { id: 84532, name: 'Base Sepolia' },
                   { id: 296, name: 'Hedera Testnet' },
                 ].filter(chain => chain.id !== primaryChain).map((chain) => (
                   <div key={chain.id} className="flex items-center space-x-2">
