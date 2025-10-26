@@ -33,6 +33,7 @@ export class IntentMonitoringService {
   private monitoredIntents: Map<string, IntentStatus> = new Map();
   private isMonitoring = false;
   private monitoringInterval: NodeJS.Timeout | null = null;
+  private executingIntents: Set<string> = new Set(); // Track intents currently being executed
   private config: MonitoringConfig = {
     pollInterval: 10000, // 10 seconds
     maxExecutionAttempts: 3,
@@ -153,6 +154,12 @@ export class IntentMonitoringService {
     // Update last checked time
     status.lastChecked = Date.now();
 
+    // Check if this intent is already being executed (prevents race conditions)
+    if (this.executingIntents.has(intentId)) {
+      console.log('🔒 Intent already being executed, skipping:', intentId);
+      return;
+    }
+
     // Skip if already executing or completed
     if (status.status === 'EXECUTING') {
       console.log('⏳ Intent already executing, skipping:', intentId);
@@ -200,6 +207,9 @@ export class IntentMonitoringService {
    * Execute an intent (with or without PKP)
    */
   private async executeIntent(intentId: string, status: IntentStatus): Promise<void> {
+    // Acquire lock
+    this.executingIntents.add(intentId);
+    
     try {
       console.log('🚀 Executing intent:', intentId);
       status.status = 'EXECUTING';
@@ -257,6 +267,9 @@ export class IntentMonitoringService {
       }
       
       this.emit('intent:error', { intentId, error: error?.message });
+    } finally {
+      // Always release the lock
+      this.executingIntents.delete(intentId);
     }
   }
 
