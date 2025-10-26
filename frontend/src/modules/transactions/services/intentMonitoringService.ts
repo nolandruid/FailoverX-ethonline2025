@@ -403,13 +403,31 @@ export class IntentMonitoringService {
         intent.amount
       );
 
-      console.log(`[AVAIL] Backup chain selected: Chain ID ${backupChainId}`);
+      // Get chain names for better logging
+      const chainNames: Record<number, string> = {
+        11155111: 'Ethereum Sepolia',
+        421614: 'Arbitrum Sepolia',
+        11155420: 'Optimism Sepolia',
+        296: 'Hedera Testnet',
+      };
+      
+      const backupChainName = chainNames[backupChainId] || `Chain ${backupChainId}`;
+      const primaryChainName = chainNames[primaryChainId] || `Chain ${primaryChainId}`;
+      
+      console.log(`[AVAIL] ✅ Backup chain selected: ${backupChainName} (${backupChainId})`);
+      console.log(`[FAILOVER] 🔄 Switching from ${primaryChainName} → ${backupChainName}`);
       this.emit('intent:backup_selected', { intentId, backupChain: backupChainId, primaryChain: primaryChainId });
 
       // Bridge assets to backup chain
       status.status = 'BRIDGING';
-      transactionNotificationService.notifyBridgingStarted(intentId, `Chain ${primaryChainId}`, `Chain ${backupChainId}`);
-      this.emit('intent:bridging', { intentId, fromChain: primaryChainId, toChain: backupChainId });
+      transactionNotificationService.notifyBridgingStarted(intentId, primaryChainName, backupChainName);
+      this.emit('intent:bridging', { 
+        intentId, 
+        fromChain: primaryChainId, 
+        toChain: backupChainId,
+        fromChainName: primaryChainName,
+        toChainName: backupChainName 
+      });
 
       console.log('[BRIDGE] Initiating cross-chain asset transfer via Avail Nexus');
       const bridgeResult = await availBridgeService.bridgeForFailover({

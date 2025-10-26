@@ -895,6 +895,11 @@ export const TransactionScheduler = () => {
                   {monitoringEvents.slice(-5).reverse().map((event, idx) => (
                     <div key={idx} className="p-2 bg-[#151815] rounded border border-purple-500/30">
                       <span className="font-semibold text-purple-400">{event.type}</span>
+                      {event.data?.fromChainName && event.data?.toChainName && (
+                        <span className="text-yellow-400 ml-2">
+                          {event.data.fromChainName} → {event.data.toChainName}
+                        </span>
+                      )}
                       <span className="text-gray-400 ml-2">
                         {new Date(event.timestamp).toLocaleTimeString()}
                       </span>
