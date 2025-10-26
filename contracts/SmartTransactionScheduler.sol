@@ -157,15 +157,6 @@ contract SmartTransactionScheduler is ReentrancyGuard, Ownable {
         });
         supportedChains.push(11155111);
         
-        // Polygon Mumbai (deprecated but for demo)
-        chainGasEstimates[80001] = ChainGasEstimate({
-            chainId: 80001,
-            estimatedGas: 21000,
-            gasPrice: 30 gwei,
-            isActive: true
-        });
-        supportedChains.push(80001);
-        
         // Arbitrum Sepolia
         chainGasEstimates[421614] = ChainGasEstimate({
             chainId: 421614,

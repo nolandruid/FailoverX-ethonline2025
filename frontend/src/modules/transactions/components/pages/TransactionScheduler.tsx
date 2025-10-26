@@ -641,7 +641,6 @@ export const TransactionScheduler = () => {
               <div className="space-y-2">
                 {[
                   { id: 11155111, name: 'Sepolia' },
-                  { id: 80001, name: 'Mumbai Testnet' },
                   { id: 421614, name: 'Arbitrum Sepolia' },
                   { id: 11155420, name: 'Optimism Sepolia' },
                   { id: 296, name: 'Hedera Testnet' },
