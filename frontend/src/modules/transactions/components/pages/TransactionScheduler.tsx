@@ -111,9 +111,10 @@ export const TransactionScheduler = () => {
     const lastEvent = monitoringEvents[monitoringEvents.length - 1];
     if (!lastEvent) return;
 
-    // Show Blockscout toast for executed transactions
+    // Add to recent transactions (disabled toast spam)
     if (lastEvent.type === 'intent:executed' && lastEvent.data?.txHash && chainId) {
-      showTransactionToast(chainId, lastEvent.data.txHash);
+      // Disabled to prevent notification spam
+      // showTransactionToast(chainId, lastEvent.data.txHash);
       
       // Add to recent transactions
       setRecentTransactions(prev => [{
@@ -122,7 +123,7 @@ export const TransactionScheduler = () => {
         timestamp: Date.now(),
       }, ...prev.slice(0, 9)]); // Keep last 10
     }
-  }, [monitoringEvents, chainId, showTransactionToast]);
+  }, [monitoringEvents, chainId]);
 
   const handleConnect = async () => {
     await connect();
