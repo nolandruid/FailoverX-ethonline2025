@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-// Smart Transaction Scheduler ABI (updated to match deployed contract)
+// FailoverX ABI (updated to match deployed contract)
 const SMART_SCHEDULER_ABI = [
   // Events
   "event IntentCreated(uint256 indexed intentId, address indexed creator, uint8 actionType, address targetToken, uint256 amount)",
@@ -46,7 +46,7 @@ export interface CreateIntentParams {
 }
 
 /**
- * Service for interacting with Smart Transaction Scheduler contract
+ * Service for interacting with FailoverX contract
  */
 export class SmartContractService {
   private contract: ethers.Contract | null = null;

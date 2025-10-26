@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { useWalletConnection } from '../../hooks/useWalletConnection';
 import { usePKP } from '../../hooks/usePKP';
@@ -14,8 +15,13 @@ import { Input } from '@/globals/components/ui/input';
 import { Label } from '@/globals/components/ui/label';
 import { Badge } from '@/globals/components/ui/badge';
 import { Alert, AlertDescription } from '@/globals/components/ui/alert';
+import { ROUTES } from '@/app/router/consts';
+import { useToast } from '@/globals/components/ui/toast';
+import { transactionNotificationService } from '../../services/transactionNotificationService';
 
 export const TransactionScheduler = () => {
+  const navigate = useNavigate();
+  const toast = useToast();
   const {
     address,
     chainId,
@@ -30,6 +36,11 @@ export const TransactionScheduler = () => {
     formatAddress,
     isMetaMaskInstalled,
   } = useWalletConnection();
+
+  // Initialize transaction notification service with toast
+  useEffect(() => {
+    transactionNotificationService.initialize(toast.addToast);
+  }, [toast]);
 
   const [formData, setFormData] = useState<TransactionFormData>({
     token: 'USDC',
@@ -167,6 +178,13 @@ export const TransactionScheduler = () => {
       
       console.log('✅ Transaction intent created:', newIntentId);
       
+      // Show toast notification for intent creation
+      transactionNotificationService.notifyIntentCreated(
+        newIntentId,
+        formData.amount,
+        formData.token
+      );
+      
       // Show Blockscout notification if we have a transaction hash
       // Note: Intent creation returns intent ID, actual execution will have tx hash
       // We'll show notifications when monitoring detects execution
@@ -218,11 +236,15 @@ export const TransactionScheduler = () => {
   // If not connected
   if (!isConnected) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-md p-6">
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-[#1a1f1a] via-[#0f120f] to-[#1a1f1a] relative overflow-hidden">
+        {/* Lime green glow effects */}
+        <div className="absolute -top-40 right-1/3 w-[700px] h-[700px] bg-[#a3e635]/20 rounded-full blur-[150px]"></div>
+        <div className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-[#84cc16]/15 rounded-full blur-[130px]"></div>
+        
+        <Card className="w-full max-w-md p-8 bg-[#1c1f1c]/90 border-[#a3e635]/20 backdrop-blur-xl shadow-2xl relative z-10">
           <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold">Smart Transaction Scheduler</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-white">FailoverX</h1>
+            <p className="text-gray-400">
               Connect your wallet to schedule transactions with automatic failover
             </p>
             {error && (
@@ -233,7 +255,7 @@ export const TransactionScheduler = () => {
             <Button
               onClick={handleConnect}
               disabled={isConnecting}
-              className="w-full"
+              className="w-full bg-[#a3e635] hover:bg-[#84cc16] text-black font-bold shadow-lg rounded-md py-3"
             >
               {isConnecting ? 'Connecting...' : 'Connect MetaMask'}
             </Button>
@@ -249,8 +271,13 @@ export const TransactionScheduler = () => {
 
   // Connected state
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen p-4 bg-gradient-to-br from-[#1a1f1a] via-[#0f120f] to-[#1a1f1a] relative overflow-hidden">
+      {/* Lime green glow effects */}
+      <div className="absolute -top-32 right-1/3 w-[700px] h-[700px] bg-[#a3e635]/20 rounded-full blur-[150px]"></div>
+      <div className="absolute -bottom-32 left-1/4 w-[700px] h-[700px] bg-[#84cc16]/15 rounded-full blur-[130px]"></div>
+      <div className="absolute top-0 left-1/2 w-[500px] h-[500px] bg-[#a3e635]/10 rounded-full blur-[120px]"></div>
+      
+      <div className="max-w-4xl mx-auto space-y-6 relative z-10">
         {/* Wrong Network Warning */}
         {isWrongNetwork && (
           <Alert variant="destructive" className="border-red-500 bg-red-50">
@@ -276,39 +303,48 @@ export const TransactionScheduler = () => {
         )}
 
         {/* Wallet Info Header */}
-        <Card className="p-6">
+        <Card className="p-6 bg-[#1c1f1c]/80 border-[#a3e635]/30 backdrop-blur-xl shadow-lg">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-sm text-gray-600">Connected Wallet</p>
-              <p className="font-mono font-semibold">{formatAddress(address!)}</p>
+              <p className="text-sm text-gray-400">Connected Wallet</p>
+              <p className="font-mono font-semibold text-white">{formatAddress(address!)}</p>
             </div>
             <div className="space-y-1 text-right">
               <div className="flex items-center gap-2">
-                <p className="text-sm text-gray-600">{chainName}</p>
+                <p className="text-sm text-gray-400">{chainName}</p>
                 {isWrongNetwork && <Badge variant="destructive">Wrong Network</Badge>}
-                {!isWrongNetwork && <Badge className="bg-green-500">Sepolia ✓</Badge>}
+                {!isWrongNetwork && <Badge className="bg-green-500 text-white">Sepolia ✓</Badge>}
               </div>
-              <p className="font-semibold">{balance} ETH</p>
+              <p className="font-semibold text-white">{balance} ETH</p>
             </div>
-            <Button onClick={handleDisconnect} variant="outline">
-              Disconnect
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => navigate(ROUTES.TRANSACTION_HISTORY.path)} 
+                variant="outline"
+                className="bg-[#2a2f2a] hover:bg-[#3a3f3a] border-[#a3e635]/30 text-white rounded-md"
+              >
+                History
+              </Button>
+              <Button onClick={handleDisconnect} className="bg-[#2a2f2a] hover:bg-[#3a3f3a] border border-[#a3e635]/30 text-white rounded-md">
+                Disconnect
+              </Button>
+            </div>
           </div>
         </Card>
 
         {/* Vincent AI PKP Section */}
-        <Card className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-          <h2 className="text-xl font-bold mb-4 text-purple-800">🤖 Vincent AI-Powered PKPs</h2>
-          <p className="text-sm text-gray-600 mb-4">
+        <Card className="p-6 bg-[#1c1f1c]/80 border-purple-500/30 backdrop-blur-xl shadow-lg">
+          <h2 className="text-xl font-bold mb-4 text-purple-400">Vincent AI-Powered PKPs</h2>
+          <p className="text-sm text-gray-400 mb-4">
             Create an AI-powered PKP using Vincent that intelligently routes transactions across chains
           </p>
           
           {(pkp || vincentPkp) ? (
             <div className="space-y-2">
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                ✅ PKP Created
+              <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30">
+                PKP Created
               </Badge>
-              <div className="text-sm space-y-1">
+              <div className="text-sm space-y-1 text-gray-300">
                 <p><strong>Token ID:</strong> {pkp?.pkp?.tokenId || vincentPkp?.tokenId}</p>
                 <p><strong>ETH Address:</strong> {pkp?.pkp?.ethAddress || vincentPkp?.ethAddress}</p>
                 <p><strong>Public Key:</strong> {pkp?.pkp?.publicKey?.slice(0, 20) || vincentPkp?.publicKey?.slice(0, 20)}...</p>
@@ -332,7 +368,7 @@ export const TransactionScheduler = () => {
                 <Button
                   onClick={createPKP}
                   disabled={isCreatingPKP}
-                  className="bg-purple-600 hover:bg-purple-700 mr-2"
+                  className="bg-purple-500 hover:bg-purple-600 text-white mr-2 rounded-md"
                 >
                   {isCreatingPKP ? 'Creating PKP...' : 'Create Standard PKP'}
                 </Button>
@@ -353,9 +389,9 @@ export const TransactionScheduler = () => {
                     }
                   }}
                   disabled={isCreatingVincent}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-md"
                 >
-                  {isCreatingVincent ? 'Creating AI PKP...' : '🤖 Create Vincent AI PKP'}
+                  {isCreatingVincent ? 'Creating AI PKP...' : 'Create Vincent AI PKP'}
                 </Button>
               </div>
             </div>
@@ -363,8 +399,8 @@ export const TransactionScheduler = () => {
         </Card>
 
         {/* Transaction Form */}
-        <Card className="p-6">
-          <h2 className="text-xl font-bold mb-6">Schedule Transaction</h2>
+        <Card className="p-6 bg-[#1c1f1c]/80 border-[#a3e635]/30 backdrop-blur-xl shadow-lg">
+          <h2 className="text-xl font-bold mb-6 text-white">Schedule Transaction</h2>
           
           {submitError && (
             <Alert variant="destructive" className="mb-4">
@@ -373,9 +409,9 @@ export const TransactionScheduler = () => {
           )}
           
           {intentId && (
-            <Alert className="mb-4 bg-green-50 border-green-200">
-              <AlertDescription className="text-green-700">
-                ✅ Transaction intent created! ID: {intentId}
+            <Alert className="mb-4 bg-green-500/20 border-green-500/30">
+              <AlertDescription className="text-green-400">
+                Transaction intent created! ID: {intentId}
               </AlertDescription>
             </Alert>
           )}
@@ -383,12 +419,12 @@ export const TransactionScheduler = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Token Selection */}
             <div className="space-y-2">
-              <Label htmlFor="token">Token</Label>
+              <Label htmlFor="token" className="text-gray-300">Token</Label>
               <select
                 id="token"
                 value={formData.token}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormChange('token', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[#151815] border border-[#2a2f2a] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#a3e635]"
               >
                 <option value="USDC">USDC</option>
                 <option value="ETH">ETH</option>
@@ -399,7 +435,7 @@ export const TransactionScheduler = () => {
 
             {/* Amount */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount" className="text-gray-300">Amount</Label>
               <Input
                 id="amount"
                 type="number"
@@ -413,12 +449,12 @@ export const TransactionScheduler = () => {
 
             {/* Action Selection */}
             <div className="space-y-2">
-              <Label htmlFor="action">Action</Label>
+              <Label htmlFor="action" className="text-gray-300">Action</Label>
               <select
                 id="action"
                 value={formData.action}
                 onChange={(e) => handleFormChange('action', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[#151815] border border-[#2a2f2a] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#a3e635]"
               >
                 <option value="TRANSFER">Transfer</option>
                 <option value="SWAP">Swap</option>
@@ -428,7 +464,7 @@ export const TransactionScheduler = () => {
             {/* Recipient (only for Transfer) */}
             {formData.action === 'TRANSFER' && (
               <div className="space-y-2">
-                <Label htmlFor="recipient">Recipient Address</Label>
+                <Label htmlFor="recipient" className="text-gray-300">Recipient Address</Label>
                 <Input
                   id="recipient"
                   type="text"
@@ -442,22 +478,22 @@ export const TransactionScheduler = () => {
 
             {/* Failover Chains */}
             <div className="space-y-2">
-              <Label>Failover Chains</Label>
+              <Label className="text-gray-300">Failover Chains</Label>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">Sepolia (11155111)</Badge>
-                <Badge variant="outline">Mumbai (80001)</Badge>
-                <Badge variant="outline">Arbitrum Sepolia (421614)</Badge>
-                <Badge variant="outline">Optimism Sepolia (11155420)</Badge>
-                <Badge variant="outline">Hedera Testnet (296)</Badge>
+                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Sepolia (11155111)</Badge>
+                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Mumbai (80001)</Badge>
+                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Arbitrum Sepolia (421614)</Badge>
+                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Optimism Sepolia (11155420)</Badge>
+                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Hedera Testnet (296)</Badge>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-400">
                 If the transaction fails on the primary chain, it will automatically retry on these chains
               </p>
             </div>
 
             {/* Max Gas Price */}
             <div className="space-y-2">
-              <Label htmlFor="maxGasPrice">Max Gas Price (Gwei)</Label>
+              <Label htmlFor="maxGasPrice" className="text-gray-300">Max Gas Price (Gwei)</Label>
               <Input
                 id="maxGasPrice"
                 type="number"
@@ -466,7 +502,7 @@ export const TransactionScheduler = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxGasPrice(e.target.value)}
                 required
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-400">
                 Transaction will only execute if gas price is below this threshold
               </p>
             </div>
@@ -494,17 +530,17 @@ export const TransactionScheduler = () => {
                     }
                   }}
                   disabled={isAnalyzing || !formData.amount}
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 rounded-md"
                 >
-                  {isAnalyzing ? '🤖 Analyzing...' : '🤖 Get Vincent AI Recommendation'}
+                  {isAnalyzing ? 'Analyzing...' : 'Get Vincent AI Recommendation'}
                 </Button>
               </div>
               
               {aiAnalysis && (
-                <Alert className="bg-blue-50 border-blue-200">
-                  <AlertDescription className="text-blue-700">
+                <Alert className="bg-blue-500/20 border-blue-500/30">
+                  <AlertDescription className="text-blue-400">
                     <div className="space-y-2">
-                      <p><strong>🤖 Vincent AI Recommendation:</strong></p>
+                      <p><strong>Vincent AI Recommendation:</strong></p>
                       <p><strong>Chain:</strong> {aiAnalysis.recommendedChain}</p>
                       <p><strong>Gas Estimate:</strong> {aiAnalysis.gasEstimate} gwei</p>
                       <p><strong>Success Rate:</strong> {Math.round(aiAnalysis.successProbability * 100)}%</p>
@@ -518,7 +554,7 @@ export const TransactionScheduler = () => {
             {/* Submit Button */}
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full bg-[#a3e635] hover:bg-[#84cc16] text-black font-bold rounded-md shadow-lg"
               disabled={isSubmitting || !smartContractService.isReady()}
             >
               {isSubmitting ? 'Creating Intent...' : 'Schedule Transaction'}
@@ -527,16 +563,16 @@ export const TransactionScheduler = () => {
         </Card>
 
         {/* PKP Monitoring Panel */}
-        <Card className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-          <h2 className="text-xl font-bold mb-4 text-purple-800">🤖 Vincent PKP Auto-Execution</h2>
+        <Card className="p-6 bg-[#1c1f1c]/80 border-purple-500/30 backdrop-blur-xl shadow-lg">
+          <h2 className="text-xl font-bold mb-4 text-purple-400">Vincent PKP Auto-Execution</h2>
           
           <div className="space-y-4">
             {/* PKP Status */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">PKP Status</p>
-                <Badge variant={isPKPReady ? "default" : "outline"} className={isPKPReady ? "bg-green-500" : ""}>
-                  {isPKPReady ? "✅ Ready" : "⏸️ Not Initialized"}
+                <p className="text-sm text-gray-400">PKP Status</p>
+                <Badge variant={isPKPReady ? "default" : "outline"} className={isPKPReady ? "bg-green-500 text-white" : "bg-[#2a2f2a] text-gray-300"}>
+                  {isPKPReady ? "Ready" : "Not Initialized"}
                 </Badge>
               </div>
               
@@ -550,11 +586,16 @@ export const TransactionScheduler = () => {
                         pkpEthAddress: vincentPkp.ethAddress,
                         vincentAgentId: vincentPkp.vincentAgentId,
                       });
+                      transactionNotificationService.notifyPKPInitialized();
                     } catch (error) {
                       console.error('Failed to initialize PKP:', error);
+                      transactionNotificationService.notifyError(
+                        'PKP Initialization Failed',
+                        'Failed to initialize Vincent AI PKP'
+                      );
                     }
                   }}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-purple-500 hover:bg-purple-600 text-white rounded-md"
                 >
                   Initialize PKP
                 </Button>
@@ -564,9 +605,9 @@ export const TransactionScheduler = () => {
             {/* Monitoring Controls */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Monitoring Status</p>
-                <Badge variant={isMonitoring ? "default" : "outline"} className={isMonitoring ? "bg-blue-500" : ""}>
-                  {isMonitoring ? "🔄 Active" : "⏸️ Stopped"}
+                <p className="text-sm text-gray-400">Monitoring Status</p>
+                <Badge variant={isMonitoring ? "default" : "outline"} className={isMonitoring ? "bg-blue-500 text-white" : "bg-[#2a2f2a] text-gray-300"}>
+                  {isMonitoring ? "Active" : "Stopped"}
                 </Badge>
               </div>
               
@@ -583,7 +624,7 @@ export const TransactionScheduler = () => {
                       }
                     }}
                     disabled={!address}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-500 hover:bg-blue-600 text-white rounded-md"
                   >
                     Start Monitoring
                   </Button>
@@ -591,7 +632,7 @@ export const TransactionScheduler = () => {
                   <Button
                     size="sm"
                     onClick={stopMonitoring}
-                    variant="outline"
+                    className="bg-[#2a2f2a] hover:bg-[#3a3f3a] text-white border border-[#3a3f3a] rounded-md"
                   >
                     Stop Monitoring
                   </Button>
@@ -600,9 +641,9 @@ export const TransactionScheduler = () => {
             </div>
 
             {/* Monitoring Config */}
-            <div className="text-xs text-gray-600 space-y-1">
-              <p>• Auto-Execute: {monitoringConfig.autoExecute ? '✅' : '❌'}</p>
-              <p>• Use PKP: {monitoringConfig.usePKP ? '✅' : '❌'}</p>
+            <div className="text-xs text-gray-400 space-y-1">
+              <p>• Auto-Execute: {monitoringConfig.autoExecute ? 'Yes' : 'No'}</p>
+              <p>• Use PKP: {monitoringConfig.usePKP ? 'Yes' : 'No'}</p>
               <p>• Poll Interval: {monitoringConfig.pollInterval / 1000}s</p>
               <p>• Max Attempts: {monitoringConfig.maxExecutionAttempts}</p>
             </div>
@@ -610,24 +651,24 @@ export const TransactionScheduler = () => {
             {/* Monitored Intents */}
             {monitoredIntents.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-purple-700">Monitored Intents ({monitoredIntents.length})</p>
+                <p className="text-sm font-semibold text-purple-400">Monitored Intents ({monitoredIntents.length})</p>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {monitoredIntents.map((intent) => (
-                    <div key={intent.intentId} className="p-3 bg-white rounded-md border border-purple-200 text-sm">
+                    <div key={intent.intentId} className="p-3 bg-[#151815] rounded-md border border-purple-500/30 text-sm">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-mono text-xs">ID: {intent.intentId}</p>
-                          <Badge variant="outline" className="mt-1">
+                          <p className="font-mono text-xs text-gray-300">ID: {intent.intentId}</p>
+                          <Badge className="mt-1 bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">
                             {intent.status}
                           </Badge>
                         </div>
-                        <div className="text-right text-xs text-gray-600">
+                        <div className="text-right text-xs text-gray-400">
                           <p>Attempts: {intent.executionAttempts}</p>
                           {intent.status === 'PENDING' && (
                             <Button
                               size="sm"
                               onClick={() => triggerExecution(intent.intentId)}
-                              className="mt-1 h-6 text-xs"
+                              className="mt-1 h-6 text-xs bg-[#a3e635] hover:bg-[#84cc16] text-black rounded-md"
                             >
                               Execute Now
                             </Button>
@@ -643,12 +684,12 @@ export const TransactionScheduler = () => {
             {/* Recent Events */}
             {monitoringEvents.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-purple-700">Recent Events</p>
+                <p className="text-sm font-semibold text-purple-400">Recent Events</p>
                 <div className="space-y-1 max-h-32 overflow-y-auto text-xs">
                   {monitoringEvents.slice(-5).reverse().map((event, idx) => (
-                    <div key={idx} className="p-2 bg-white rounded border border-purple-100">
-                      <span className="font-semibold text-purple-600">{event.type}</span>
-                      <span className="text-gray-500 ml-2">
+                    <div key={idx} className="p-2 bg-[#151815] rounded border border-purple-500/30">
+                      <span className="font-semibold text-purple-400">{event.type}</span>
+                      <span className="text-gray-400 ml-2">
                         {new Date(event.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
@@ -669,12 +710,12 @@ export const TransactionScheduler = () => {
         )}
 
         {/* Enhanced Info Card */}
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <h3 className="font-semibold mb-3 text-blue-800">🚀 Smart Transaction Scheduler</h3>
+        <Card className="p-6 bg-[#1c1f1c]/80 border-blue-500/30 backdrop-blur-xl shadow-lg">
+          <h3 className="font-semibold mb-3 text-blue-400">FailoverX</h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
-              <h4 className="font-medium mb-2 text-blue-700">✨ Features</h4>
-              <ul className="text-gray-700 space-y-1">
+              <h4 className="font-medium mb-2 text-[#a3e635]">Features</h4>
+              <ul className="text-gray-300 space-y-1">
                 <li>• Cross-chain failover automation</li>
                 <li>• Gas price optimization</li>
                 <li>• PKP-powered execution</li>
@@ -683,8 +724,8 @@ export const TransactionScheduler = () => {
               </ul>
             </div>
             <div>
-              <h4 className="font-medium mb-2 text-blue-700">🔗 Supported Chains</h4>
-              <ul className="text-gray-700 space-y-1">
+              <h4 className="font-medium mb-2 text-[#a3e635]">Supported Chains</h4>
+              <ul className="text-gray-300 space-y-1">
                 <li>• Ethereum Sepolia</li>
                 <li>• Polygon Mumbai</li>
                 <li>• Arbitrum Sepolia</li>

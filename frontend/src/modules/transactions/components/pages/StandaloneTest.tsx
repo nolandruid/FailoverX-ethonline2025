@@ -144,7 +144,7 @@ const StandaloneTest = () => {
         <div className="flex items-center justify-center min-h-screen p-4">
           <Card className="w-full max-w-md p-6">
           <h1 className="text-2xl font-bold mb-4">
-            Smart Transaction Scheduler
+            FailoverX
           </h1>
 
           <p className="text-gray-600 mb-6">
@@ -181,7 +181,7 @@ const StandaloneTest = () => {
       <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">
-          Smart Transaction Scheduler
+          FailoverX
         </h1>
 
         {/* Wallet Info Card */}
