@@ -451,8 +451,13 @@ export const TransactionScheduler = () => {
                       Cheapest: {cheapestChain.chainName}
                     </span>
                     <span className="text-lg font-bold text-green-400">
-                      {cheapestChain.gasPrice} Gwei
+                      {cheapestChain.gasPrice} {cheapestChain.displayUnit || 'Gwei'}
                     </span>
+                    {cheapestChain.estimatedUSD !== undefined && (
+                      <span className="text-xs text-green-400/70">
+                        (~${cheapestChain.estimatedUSD.toFixed(4)})
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -488,8 +493,13 @@ export const TransactionScheduler = () => {
                       {gasPrice.status === 'success' ? (
                         <>
                           <div className="text-lg font-bold text-white mb-1">
-                            {gasPrice.gasPrice} <span className="text-[10px] font-normal text-gray-400">Gwei</span>
+                            {gasPrice.gasPrice} <span className="text-[10px] font-normal text-gray-400">{gasPrice.displayUnit || 'Gwei'}</span>
                           </div>
+                          {gasPrice.estimatedUSD !== undefined && (
+                            <div className="text-[10px] text-gray-500">
+                              ~${gasPrice.estimatedUSD.toFixed(4)} USD
+                            </div>
+                          )}
                           
                           {congestionData && (
                             <div className="flex items-center gap-1">
