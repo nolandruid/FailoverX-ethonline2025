@@ -22,6 +22,16 @@ module.exports = {
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
       chainId: 11155111,
     },
+    arbitrumSepolia: {
+      url: process.env.ARBITRUM_SEPOLIA_URL || "https://sepolia-rollup.arbitrum.io/rpc",
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 421614,
+    },
+    optimismSepolia: {
+      url: process.env.OPTIMISM_SEPOLIA_URL || "https://sepolia.optimism.io",
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      chainId: 11155420,
+    },
     baseSepolia: {
       url: process.env.BASE_SEPOLIA_URL || "https://sepolia.base.org",
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
