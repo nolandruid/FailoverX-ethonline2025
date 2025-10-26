@@ -3,6 +3,7 @@ import { smartContractService } from './smartContractService';
 import { pkpExecutionService } from './pkpExecutionService';
 import { vincentPKPService } from './vincentPKPService';
 import { availBridgeService } from '../../chains/services/availBridgeService';
+import { transactionNotificationService } from './transactionNotificationService';
 
 export interface IntentStatus {
   intentId: string;
@@ -69,6 +70,7 @@ export class IntentMonitoringService {
     }, this.config.pollInterval);
 
     console.log('✅ Intent monitoring started');
+    transactionNotificationService.notifyMonitoringStarted();
     this.emit('monitoring:started', { userAddress, config: this.config });
   }
 
@@ -89,6 +91,7 @@ export class IntentMonitoringService {
 
     this.isMonitoring = false;
     console.log('✅ Intent monitoring stopped');
+    transactionNotificationService.notifyMonitoringStopped();
     this.emit('monitoring:stopped', {});
   }
 
@@ -143,6 +146,7 @@ export class IntentMonitoringService {
       };
       this.monitoredIntents.set(intentId, status);
       console.log('📝 Now monitoring intent:', intentId);
+      transactionNotificationService.notifyIntentDetected(intentId);
       this.emit('intent:detected', { intent });
     }
 
@@ -159,6 +163,7 @@ export class IntentMonitoringService {
     if (status.executionAttempts >= this.config.maxExecutionAttempts) {
       console.log('⚠️ Max execution attempts reached for intent:', intentId);
       status.status = 'FAILED';
+      transactionNotificationService.notifyMaxAttemptsReached(intentId, status.executionAttempts);
       this.emit('intent:max_attempts', { intentId, attempts: status.executionAttempts });
       return;
     }
@@ -187,6 +192,7 @@ export class IntentMonitoringService {
       console.log('🚀 Executing intent:', intentId);
       status.status = 'EXECUTING';
       status.executionAttempts++;
+      transactionNotificationService.notifyIntentExecuting(intentId, status.executionAttempts);
       this.emit('intent:executing', { intentId, attempt: status.executionAttempts });
 
       let result;
@@ -206,6 +212,7 @@ export class IntentMonitoringService {
         console.log('✅ Intent executed successfully:', intentId);
         console.log('📝 Transaction hash:', result.txHash);
         status.status = 'COMPLETED';
+        transactionNotificationService.notifyIntentExecuted(intentId, result.txHash);
         this.emit('intent:executed', { intentId, txHash: result.txHash });
         
         // Remove from monitoring after successful execution
@@ -219,6 +226,7 @@ export class IntentMonitoringService {
           await this.triggerFailover(intentId, status);
         } else {
           status.status = 'FAILED';
+          transactionNotificationService.notifyIntentFailed(intentId, result.error, status.executionAttempts);
           this.emit('intent:failed', { intentId, error: result.error });
         }
       }
@@ -346,6 +354,7 @@ export class IntentMonitoringService {
     try {
       status.failoverAttempts = (status.failoverAttempts || 0) + 1;
       status.status = 'FAILOVER_TRIGGERED';
+      transactionNotificationService.notifyFailoverTriggered(intentId, 'Primary Chain', 'Backup Chain');
       this.emit('intent:failover_triggered', { intentId, attempt: status.failoverAttempts });
 
       console.log('[FAILOVER] Initiating Avail Nexus cross-chain failover');
@@ -374,6 +383,7 @@ export class IntentMonitoringService {
 
       // Bridge assets to backup chain
       status.status = 'BRIDGING';
+      transactionNotificationService.notifyBridgingStarted(intentId, `Chain ${primaryChainId}`, `Chain ${backupChainId}`);
       this.emit('intent:bridging', { intentId, fromChain: primaryChainId, toChain: backupChainId });
 
       console.log('[BRIDGE] Initiating cross-chain asset transfer via Avail Nexus');
@@ -405,6 +415,7 @@ export class IntentMonitoringService {
       // Wait for bridge completion
       this.emit('intent:bridge_waiting', { intentId, bridgeId: bridgeResult.bridgeId, estimatedTime: bridgeResult.estimatedTime });
       await this.waitForBridgeCompletion(bridgeResult.bridgeId!, bridgeResult.estimatedTime!);
+      transactionNotificationService.notifyBridgingCompleted(intentId, `Chain ${backupChainId}`);
       this.emit('intent:bridge_completed', { intentId, bridgeId: bridgeResult.bridgeId });
 
       // Retry execution on backup chain
