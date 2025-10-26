@@ -61,6 +61,27 @@ class GasPriceService {
     }
 
     try {
+      // Special case: Hedera uses HBAR, not ETH gas pricing
+      // Hedera transactions cost ~$0.0001 USD (≈0.0005 HBAR)
+      // We use a fixed low estimate since Hedera doesn't use Gwei
+      if (chainConfig.chainId === 295) {
+        const hederaGasPrice: GasPrice = {
+          chainId: chainConfig.chainId,
+          chainName: chainConfig.name,
+          gasPrice: '0.0005', // Approximate HBAR cost per transaction
+          gasPriceWei: '0xF4240', // 1,000,000 wei equivalent
+          symbol: chainConfig.symbol,
+          rpcUrl: chainConfig.rpcUrl,
+          timestamp: Date.now(),
+          status: 'success',
+          displayUnit: 'HBAR',
+          estimatedUSD: 0.0001, // ~$0.0001 per transaction
+        };
+        
+        this.gasPriceCache.set(cacheKey, hederaGasPrice);
+        return hederaGasPrice;
+      }
+
       const response = await fetch(chainConfig.rpcUrl, {
         method: 'POST',
         headers: {
@@ -82,6 +103,7 @@ class GasPriceService {
 
       const gasPriceWei = data.result;
       const gasPriceGwei = this.weiToGwei(gasPriceWei);
+      const estimatedUSD = this.estimateUSDCost(parseFloat(gasPriceGwei), chainConfig.chainId);
 
       const gasPrice: GasPrice = {
         chainId: chainConfig.chainId,
@@ -92,6 +114,8 @@ class GasPriceService {
         rpcUrl: chainConfig.rpcUrl,
         timestamp: Date.now(),
         status: 'success',
+        displayUnit: 'Gwei',
+        estimatedUSD,
       };
 
       // Cache the result
@@ -127,13 +151,17 @@ class GasPriceService {
 
     const gasPrices = await Promise.all(gasPricePromises);
     
-    // Sort by gas price (lowest first)
+    // Sort by USD cost (lowest first) for fair cross-chain comparison
     return gasPrices.sort((a, b) => {
       if (a.status === 'error' && b.status === 'success') return 1;
       if (a.status === 'success' && b.status === 'error') return -1;
       if (a.status === 'error' && b.status === 'error') return 0;
       
-      return parseFloat(a.gasPrice) - parseFloat(b.gasPrice);
+      // Compare by USD cost if available, otherwise fall back to raw gas price
+      const aCost = a.estimatedUSD ?? parseFloat(a.gasPrice);
+      const bCost = b.estimatedUSD ?? parseFloat(b.gasPrice);
+      
+      return aCost - bCost;
     });
   }
 
@@ -189,6 +217,24 @@ class GasPriceService {
    */
   getSupportedChains(): ChainConfig[] {
     return [...SUPPORTED_CHAINS];
+  }
+
+  /**
+   * Estimate USD cost for a transaction based on gas price
+   * Uses approximate ETH price and typical transaction gas usage
+   */
+  private estimateUSDCost(gasPriceGwei: number, chainId: number): number {
+    // Approximate ETH price in USD (mock for demo)
+    const ethPriceUSD = 2500;
+    
+    // Typical gas usage for a simple transfer
+    const gasUnits = 21000;
+    
+    // Calculate cost: (gasPrice in Gwei * gasUnits * ETH price) / 1e9
+    const costInETH = (gasPriceGwei * gasUnits) / 1e9;
+    const costInUSD = costInETH * ethPriceUSD;
+    
+    return costInUSD;
   }
 
   /**
