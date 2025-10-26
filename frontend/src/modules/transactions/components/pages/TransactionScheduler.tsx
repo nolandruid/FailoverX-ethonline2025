@@ -49,7 +49,8 @@ export const TransactionScheduler = () => {
     recipient: '',
   });
 
-  const [failoverChains, setFailoverChains] = useState<number[]>([11155111, 80001, 421614, 11155420, 296]); // Sepolia, Mumbai, Arbitrum Sepolia, Optimism Sepolia, Hedera Testnet
+  const [primaryChain, setPrimaryChain] = useState<number>(11155111); // Default to Sepolia
+  const [failoverChains, setFailoverChains] = useState<number[]>([]); // Start with empty array
   const [maxGasPrice, setMaxGasPrice] = useState('50'); // 50 gwei
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -433,6 +434,23 @@ export const TransactionScheduler = () => {
               </select>
             </div>
 
+            {/* Primary Chain Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="primaryChain" className="text-gray-300">Primary Chain</Label>
+              <select
+                id="primaryChain"
+                value={primaryChain}
+                onChange={(e) => setPrimaryChain(Number(e.target.value))}
+                className="w-full px-3 py-2 bg-[#151815] border border-[#2a2f2a] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#a3e635]"
+              >
+                <option value={11155111}>Sepolia</option>
+                <option value={421614}>Arbitrum Sepolia</option>
+                <option value={11155420}>Optimism Sepolia</option>
+                <option value={84532}>Base Sepolia</option>
+                <option value={296}>Hedera Testnet</option>
+              </select>
+            </div>
+
             {/* Amount */}
             <div className="space-y-2">
               <Label htmlFor="amount" className="text-gray-300">Amount</Label>
@@ -477,17 +495,38 @@ export const TransactionScheduler = () => {
             )}
 
             {/* Failover Chains */}
-            <div className="space-y-2">
-              <Label className="text-gray-300">Failover Chains</Label>
-              <div className="flex flex-wrap gap-2">
-                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Sepolia (11155111)</Badge>
-                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Mumbai (80001)</Badge>
-                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Arbitrum Sepolia (421614)</Badge>
-                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Optimism Sepolia (11155420)</Badge>
-                <Badge className="bg-[#2a2f2a] text-gray-300 border-[#3a3f3a]">Hedera Testnet (296)</Badge>
+            <div className="space-y-3">
+              <Label className="text-gray-300">Failover Chains (Optional)</Label>
+              <div className="space-y-2">
+                {[
+                  { id: 11155111, name: 'Sepolia' },
+                  { id: 421614, name: 'Arbitrum Sepolia' },
+                  { id: 11155420, name: 'Optimism Sepolia' },
+                  { id: 84532, name: 'Base Sepolia' },
+                  { id: 296, name: 'Hedera Testnet' },
+                ].filter(chain => chain.id !== primaryChain).map((chain) => (
+                  <div key={chain.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`chain-${chain.id}`}
+                      checked={failoverChains.includes(chain.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFailoverChains([...failoverChains, chain.id]);
+                        } else {
+                          setFailoverChains(failoverChains.filter(id => id !== chain.id));
+                        }
+                      }}
+                      className="w-4 h-4 text-[#a3e635] bg-[#151815] border-[#2a2f2a] rounded focus:ring-[#a3e635] focus:ring-2"
+                    />
+                    <label htmlFor={`chain-${chain.id}`} className="text-sm text-gray-300 cursor-pointer">
+                      {chain.name} ({chain.id})
+                    </label>
+                  </div>
+                ))}
               </div>
               <p className="text-xs text-gray-400">
-                If the transaction fails on the primary chain, it will automatically retry on these chains
+                If the transaction fails on the primary chain, it will automatically retry on selected chains
               </p>
             </div>
 
