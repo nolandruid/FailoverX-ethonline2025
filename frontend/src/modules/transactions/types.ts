@@ -51,3 +51,58 @@ export type Chain = {
   explorerUrl: string;
   testnet: boolean;
 }
+
+// Transaction History types
+export type TransactionHistoryStatus = 'SUCCESS' | 'FAILED' | 'PENDING' | 'CANCELLED';
+
+export type FailoverAttempt = {
+  chainId: number;
+  chainName: string;
+  timestamp: number;
+  status: 'SUCCESS' | 'FAILED';
+  txHash?: string;
+  gasUsed?: string;
+  gasCost?: string;
+  error?: string;
+}
+
+export type TransactionHistoryItem = {
+  intentId: string;
+  primaryChainId: number;
+  primaryChainName: string;
+  token: Token;
+  amount: string;
+  action: TransactionAction;
+  recipient?: string;
+  status: TransactionHistoryStatus;
+  createdAt: number;
+  completedAt?: number;
+  
+  // Primary attempt
+  primaryAttempt: {
+    txHash?: string;
+    gasUsed?: string;
+    gasCost?: string;
+    status: 'SUCCESS' | 'FAILED' | 'PENDING';
+    error?: string;
+  };
+  
+  // Failover attempts
+  failoverAttempts: FailoverAttempt[];
+  
+  // Final execution details
+  finalChainId?: number;
+  finalChainName?: string;
+  finalTxHash?: string;
+  
+  // Gas savings calculation
+  gasSaved?: {
+    amount: string; // in ETH
+    percentage: number;
+    comparedToChain: string;
+  };
+  
+  // Metadata
+  maxGasPrice: string;
+  failoverChains: number[];
+}
